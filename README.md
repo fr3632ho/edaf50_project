@@ -1,4 +1,6 @@
-# edaf50_project
-### Description 
+# EDAF50 Project
 
- project description for c++
+## Contributors
+- Max Soller
+- Fredrik Horn Af Åminne Dannert
+- Alexander Magnusson
