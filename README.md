@@ -1,4 +1,4 @@
-# edaf50_project
+# EDAF50 Project
 
 ## Contributors
 - Max Soller
