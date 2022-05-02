@@ -71,21 +71,27 @@ Server init(int argc, char *argv[])
         return server;
 }
 
-void process_request(std::shared_ptr<Connection> &conn)
+void process_request(std::shared_ptr<Connection> &conn, VolatileDatabase *db)
 {
-
-        VolatileDatabase db;
-        db.createNewsgroup("Tech news");
-        db.createNewsgroup("Finance");
-        db.createNewsgroup("Crypto");
-        map<int, Newsgroup> ng = db.getNewsgroups();
 
         int nbr = readNumber(conn);
         string result;
 
         if (nbr == 1)
         {
+                db->createNewsgroup("Tech news");
+                db->createNewsgroup("Finance");
+                db->createNewsgroup("Crypto");
+                db->writeArticle(1, "Hello, 3x World!", "This is my 3rd article", "Alexander");
+        }
+        else if (nbr == 2)
+        {
+                result = "Delete newsgroup: ";
+                db->deleteNewsgroup(2);
+                map<int, Newsgroup> ng = db->getNewsgroups();
+                ng = db->getNewsgroups();
                 std::stringstream buffer;
+
                 buffer << "Newsgroups: ";
                 for (std::pair<int, Newsgroup> p : ng)
                 {
@@ -95,13 +101,35 @@ void process_request(std::shared_ptr<Connection> &conn)
                 buffer << endl;
                 result = buffer.str();
         }
-        else if (nbr == 2)
+        else if (nbr == 3)
         {
-                result = "Delete newsgroup: ";
-                db.deleteNewsgroup(2);
-                ng = db.getNewsgroups();
-                std::stringstream buffer;
+                result = "Create articles: ";
+                db->writeArticle(1, "Hello, World!", "This is my first article", "Alexander");
+                db->writeArticle(1, "Hello, again World!", "This is my second article", "Alexander");
+        }
 
+        else if (nbr == 4)
+        {
+                map<int, Article> art = db->getNewsgroupArticles(1);
+
+                std::stringstream buffer;
+                buffer << "Articles in newsgroup 1: ";
+                for (std::pair<int, Article> a : art)
+                {
+                        buffer << "\n"
+                               << "a_id " << a.second.getId() << "\n"
+                               << a.second.getTitle() << "\nAuthor: " << a.second.getAuthor()
+                               << "\n"
+                               << a.second.getText() << "\n";
+                }
+                buffer << endl;
+                result = buffer.str();
+        }
+        else if (nbr == 5)
+        {
+                map<int, Newsgroup> ng = db->getNewsgroups();
+
+                std::stringstream buffer;
                 buffer << "Newsgroups: ";
                 for (std::pair<int, Newsgroup> p : ng)
                 {
@@ -115,14 +143,14 @@ void process_request(std::shared_ptr<Connection> &conn)
         writeString(conn, result);
 }
 
-void serve_one(Server &server)
+void serve_one(Server &server, VolatileDatabase *db)
 {
         auto conn = server.waitForActivity();
         if (conn != nullptr)
         {
                 try
                 {
-                        process_request(conn);
+                        process_request(conn, db);
                 }
                 catch (ConnectionClosedException &)
                 {
@@ -141,10 +169,11 @@ void serve_one(Server &server)
 int main(int argc, char *argv[])
 {
         auto server = init(argc, argv);
+        VolatileDatabase *db = new VolatileDatabase{};
 
         while (true)
         {
-                serve_one(server);
+                serve_one(server, db);
         }
         return 0;
 }

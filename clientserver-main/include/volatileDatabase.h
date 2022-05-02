@@ -1,6 +1,7 @@
 #ifndef VOLATILEDATABASE_H
 #define VOLATILEDATABASE_H
 
+#include "article.h"
 #include "database.h"
 #include "newsgroup.h"
 #include <vector>
@@ -19,13 +20,12 @@ public:
     map<int, Newsgroup> getNewsgroups() override;
     void createNewsgroup(string title) override;
     string deleteNewsgroup(int newsgroupId) override;
-    string getNewsgroupArticles(int newsgroupId) override;
-    string getArticle(int articleId) override;
-    void writeArticle(int articleId, string title, string text, string author) override;
-    void deleteArticle(int articleId) override;
+    map<int, Article> getNewsgroupArticles(int newsgroupId) override;
+    string getArticle(int articleId, int newsgroupId) override;
+    void writeArticle(int newsgroupId, string title, string text, string author) override;
+    void deleteArticle(int articleId, int newsgroupId) override;
 
 private:
-    vector<Newsgroup> ng;
     map<int, Newsgroup> newsgroups;
     int id{1};
 };

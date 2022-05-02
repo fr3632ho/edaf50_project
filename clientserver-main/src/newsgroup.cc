@@ -1,7 +1,12 @@
 #include "newsgroup.h"
 #include <vector>
 #include <string>
+#include <algorithm>
+#include <iterator>
+#include <map>
+#include <iostream>
 
+using std::map;
 using std::string;
 using std::vector;
 
@@ -15,4 +20,15 @@ string Newsgroup::getTitle()
 int Newsgroup::getId()
 {
     return id;
+}
+
+map<int, Article> Newsgroup::getArticles()
+{
+    return articles;
+}
+
+void Newsgroup::writeArticle(string title, string text, string author)
+{
+    articles.insert(std::pair<int, Article>(article_id, Article(title, author, text, article_id)));
+    article_id++;
 }

@@ -1,4 +1,6 @@
 #include "volatileDatabase.h"
+
+#include <iostream>
 #include <vector>
 #include <string>
 #include <map>
@@ -11,7 +13,6 @@ VolatileDatabase::VolatileDatabase() {}
 
 void VolatileDatabase::createNewsgroup(string title)
 {
-    ng.push_back(Newsgroup(title, id));
     newsgroups.insert(std::pair<int, Newsgroup>(id, Newsgroup(title, id)));
     id += 1;
 }
@@ -24,23 +25,31 @@ map<int, Newsgroup> VolatileDatabase::getNewsgroups()
 string VolatileDatabase::deleteNewsgroup(int newsgroupId)
 {
     newsgroups.erase(newsgroupId);
-    return "Deleted";
+    return "";
 }
 
-string VolatileDatabase::getNewsgroupArticles(int newsgroupId)
+map<int, Article> VolatileDatabase::getNewsgroupArticles(int newsgroupId)
+{
+    Newsgroup &ng = newsgroups.at(newsgroupId);
+    return ng.getArticles();
+}
+
+string VolatileDatabase::getArticle(int newsgroupId, int articleId)
 {
     return "";
 }
 
-string VolatileDatabase::getArticle(int articleId)
+void VolatileDatabase::writeArticle(int newsgroupId, string title, string text, string author)
 {
-    return "";
+    Newsgroup &ng = newsgroups.at(newsgroupId);
+    ng.writeArticle(title, text, author);
+
+    for (std::pair<int, Article> a : ng.getArticles())
+    {
+        std::cout << a.second.getText() << " hi" << std::endl;
+    }
 }
 
-void VolatileDatabase::writeArticle(int articleId, string title, string text, string author)
-{
-}
-
-void VolatileDatabase::deleteArticle(int articleId)
+void VolatileDatabase::deleteArticle(int articleId, int newsgroupId)
 {
 }
