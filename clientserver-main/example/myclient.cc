@@ -7,15 +7,15 @@
 #include <stdexcept>
 #include <string>
 
-using std::string;
+using std::cerr;
 using std::cin;
 using std::cout;
-using std::cerr;
 using std::endl;
+using std::string;
 /*
  * Send an integer to the server as four bytes.
  */
-void writeNumber(const Connection& conn, int value)
+void writeNumber(const Connection &conn, int value)
 {
         conn.write((value >> 24) & 0xFF);
         conn.write((value >> 16) & 0xFF);
@@ -26,11 +26,12 @@ void writeNumber(const Connection& conn, int value)
 /*
  * Read a string from the server.
  */
-string readString(const Connection& conn)
+string readString(const Connection &conn)
 {
         string s;
-        char   ch;
-        while ((ch = conn.read()) != '$') {
+        char ch;
+        while ((ch = conn.read()) != '$')
+        {
                 s += ch;
         }
         return s;
@@ -39,23 +40,28 @@ string readString(const Connection& conn)
 /* Creates a client for the given args, if possible.
  * Otherwise exits with error code.
  */
-Connection init(int argc, char* argv[])
+Connection init(int argc, char *argv[])
 {
-        if (argc != 3) {
+        if (argc != 3)
+        {
                 cerr << "Usage: myclient host-name port-number" << endl;
                 exit(1);
         }
 
         int port = -1;
-        try {
+        try
+        {
                 port = std::stoi(argv[2]);
-        } catch (std::exception& e) {
+        }
+        catch (std::exception &e)
+        {
                 cerr << "Wrong port number. " << e.what() << endl;
                 exit(2);
         }
 
         Connection conn(argv[1], port);
-        if (!conn.isConnected()) {
+        if (!conn.isConnected())
+        {
                 cerr << "Connection attempt failed" << endl;
                 exit(3);
         }
@@ -63,18 +69,22 @@ Connection init(int argc, char* argv[])
         return conn;
 }
 
-int app(const Connection& conn)
+int app(const Connection &conn)
 {
         cout << "Type a number: ";
         int nbr;
-        while (cin >> nbr) {
-                try {
+        while (cin >> nbr)
+        {
+                try
+                {
                         cout << nbr << " is ...";
                         writeNumber(conn, nbr);
                         string reply = readString(conn);
                         cout << " " << reply << endl;
                         cout << "Type another number: ";
-                } catch (ConnectionClosedException&) {
+                }
+                catch (ConnectionClosedException &)
+                {
                         cout << " no reply from server. Exiting." << endl;
                         return 1;
                 }
@@ -83,7 +93,7 @@ int app(const Connection& conn)
         return 0;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
         Connection conn = init(argc, argv);
         return app(conn);
