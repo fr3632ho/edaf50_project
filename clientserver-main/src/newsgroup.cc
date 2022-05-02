@@ -27,6 +27,11 @@ map<int, Article> Newsgroup::getArticles()
     return articles;
 }
 
+void Newsgroup::deleteArticle(int articleId)
+{
+    articles.erase(articleId);
+}
+
 void Newsgroup::writeArticle(string title, string text, string author)
 {
     articles.insert(std::pair<int, Article>(article_id, Article(title, author, text, article_id)));

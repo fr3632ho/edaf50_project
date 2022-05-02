@@ -16,6 +16,7 @@ public:
     Newsgroup(string title, int id);
     string getTitle();
     map<int, Article> getArticles();
+    void deleteArticle(int articleId);
     void writeArticle(string title, string text, string author);
     int getId();
 

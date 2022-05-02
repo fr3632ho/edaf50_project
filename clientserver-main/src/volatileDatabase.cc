@@ -34,22 +34,19 @@ map<int, Article> VolatileDatabase::getNewsgroupArticles(int newsgroupId)
     return ng.getArticles();
 }
 
-string VolatileDatabase::getArticle(int newsgroupId, int articleId)
+Article VolatileDatabase::getArticle(int newsgroupId, int articleId)
 {
-    return "";
+    return newsgroups.at(newsgroupId).getArticles().at(articleId);
 }
 
 void VolatileDatabase::writeArticle(int newsgroupId, string title, string text, string author)
 {
     Newsgroup &ng = newsgroups.at(newsgroupId);
     ng.writeArticle(title, text, author);
-
-    for (std::pair<int, Article> a : ng.getArticles())
-    {
-        std::cout << a.second.getText() << " hi" << std::endl;
-    }
 }
 
-void VolatileDatabase::deleteArticle(int articleId, int newsgroupId)
+void VolatileDatabase::deleteArticle(int newsgroupId, int articleId)
 {
+    Newsgroup &ng = newsgroups.at(newsgroupId);
+    ng.deleteArticle(articleId);
 }

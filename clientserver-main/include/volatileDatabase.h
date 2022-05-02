@@ -21,7 +21,7 @@ public:
     void createNewsgroup(string title) override;
     string deleteNewsgroup(int newsgroupId) override;
     map<int, Article> getNewsgroupArticles(int newsgroupId) override;
-    string getArticle(int articleId, int newsgroupId) override;
+    Article getArticle(int articleId, int newsgroupId) override;
     void writeArticle(int newsgroupId, string title, string text, string author) override;
     void deleteArticle(int articleId, int newsgroupId) override;
 

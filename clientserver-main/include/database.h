@@ -19,7 +19,7 @@ public:
     virtual void createNewsgroup(string title) = 0;
     virtual string deleteNewsgroup(int newsgroupId) = 0;
     virtual map<int, Article> getNewsgroupArticles(int newsgroupId) = 0;
-    virtual string getArticle(int articleId, int newsgroupId) = 0;
+    virtual Article getArticle(int articleId, int newsgroupId) = 0;
     virtual void writeArticle(int newsgroupId, string title, string text, string author) = 0;
     virtual void deleteArticle(int articleId, int newsgroupId) = 0;
 };
