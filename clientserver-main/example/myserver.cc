@@ -10,10 +10,12 @@
 #include <stdexcept>
 #include <string>
 #include <sstream>
+#include <map>
 
 using std::cerr;
 using std::cout;
 using std::endl;
+using std::map;
 using std::string;
 using std::vector;
 
@@ -76,33 +78,38 @@ void process_request(std::shared_ptr<Connection> &conn)
         db.createNewsgroup("Tech news");
         db.createNewsgroup("Finance");
         db.createNewsgroup("Crypto");
-        vector<string> ng = db.getNewsgroups();
+        map<int, Newsgroup> ng = db.getNewsgroups();
 
         int nbr = readNumber(conn);
         string result;
-        std::stringstream buffer;
+
         if (nbr == 1)
         {
+                std::stringstream buffer;
                 buffer << "Newsgroups: ";
-                for (string s : ng)
+                for (std::pair<int, Newsgroup> p : ng)
                 {
                         buffer << "\n"
-                               << s;
+                               << p.first << " " << p.second.getTitle();
                 }
                 buffer << endl;
                 result = buffer.str();
         }
         else if (nbr == 2)
         {
-                result = "Create newsgroup: ";
-        }
-        else if (nbr == 3)
-        {
-                result = "Articles: ";
-        }
-        else if (nbr == 4)
-        {
-                result = "Read: ";
+                result = "Delete newsgroup: ";
+                db.deleteNewsgroup(2);
+                ng = db.getNewsgroups();
+                std::stringstream buffer;
+
+                buffer << "Newsgroups: ";
+                for (std::pair<int, Newsgroup> p : ng)
+                {
+                        buffer << "\n"
+                               << p.first << " " << p.second.getTitle();
+                }
+                buffer << endl;
+                result = buffer.str();
         }
 
         writeString(conn, result);

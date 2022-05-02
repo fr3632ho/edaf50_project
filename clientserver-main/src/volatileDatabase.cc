@@ -1,7 +1,9 @@
 #include "volatileDatabase.h"
 #include <vector>
 #include <string>
+#include <map>
 
+using std::pair;
 using std::string;
 using std::vector;
 
@@ -9,17 +11,20 @@ VolatileDatabase::VolatileDatabase() {}
 
 void VolatileDatabase::createNewsgroup(string title)
 {
-    newsgroups.push_back(title);
+    ng.push_back(Newsgroup(title, id));
+    newsgroups.insert(std::pair<int, Newsgroup>(id, Newsgroup(title, id)));
+    id += 1;
 }
 
-vector<string> VolatileDatabase::getNewsgroups()
+map<int, Newsgroup> VolatileDatabase::getNewsgroups()
 {
     return newsgroups;
 }
 
 string VolatileDatabase::deleteNewsgroup(int newsgroupId)
 {
-    return "";
+    newsgroups.erase(newsgroupId);
+    return "Deleted";
 }
 
 string VolatileDatabase::getNewsgroupArticles(int newsgroupId)
