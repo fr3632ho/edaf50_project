@@ -3,6 +3,8 @@
 #include "connectionclosedexception.h"
 #include "server.h"
 #include "volatileDatabase.h"
+#include "messageProtocol.h"
+#include "protocol.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -71,108 +73,17 @@ Server init(int argc, char *argv[])
         return server;
 }
 
-void process_request(std::shared_ptr<Connection> &conn, VolatileDatabase *db)
-{
-
-        int nbr = readNumber(conn);
-        string result;
-
-        if (nbr == 1)
-        {
-                db->createNewsgroup("Tech news");
-                db->createNewsgroup("Finance");
-                db->createNewsgroup("Crypto");
-        }
-        else if (nbr == 2)
-        {
-                result = "Delete newsgroup: ";
-                db->deleteNewsgroup(2);
-                map<int, Newsgroup> ng = db->getNewsgroups();
-        }
-        else if (nbr == 3)
-        {
-                result = "Create articles: ";
-                db->writeArticle(1, "Hello, World!", "This is my first article", "Alexander");
-                db->writeArticle(1, "Hello, again World!", "This is my second article", "Alexander");
-                db->writeArticle(1, "Hello, 3x World!", "This is my 3rd article", "Alexander");
-        }
-
-        else if (nbr == 4)
-        {
-                map<int, Article> art = db->getNewsgroupArticles(1);
-
-                std::stringstream buffer;
-                buffer << "Articles in newsgroup 1: ";
-                for (std::pair<int, Article> a : art)
-                {
-                        buffer << "\n"
-                               << "a_id " << a.second.getId() << "\n"
-                               << a.second.getTitle() << "\nAuthor: " << a.second.getAuthor()
-                               << "\n"
-                               << a.second.getText() << "\n";
-                }
-                buffer << endl;
-                result = buffer.str();
-        }
-
-        else if (nbr == 5)
-        {
-                map<int, Newsgroup> ng = db->getNewsgroups();
-
-                std::stringstream buffer;
-                buffer << "Newsgroups: ";
-                for (std::pair<int, Newsgroup> p : ng)
-                {
-                        buffer << "\n"
-                               << p.first << " " << p.second.getTitle();
-                }
-                buffer << endl;
-                result = buffer.str();
-        }
-
-        else if (nbr == 6)
-        {
-                std::stringstream buffer;
-                db->writeArticle(2, "Article 1, Newsgroup 2", "This is getting rather boring", "Alexander");
-                Article a = db->getArticle(2, 1);
-
-                buffer << "Article 1 in newsgroup 2:\n"
-                       << a.getId() << "\n"
-                       << a.getTitle() << "\n"
-                       << a.getAuthor() << "\n"
-                       << a.getText() << endl;
-                result = buffer.str();
-        }
-
-        else if (nbr == 7)
-        {
-                db->deleteArticle(2, 1);
-                std::stringstream buffer2;
-                map<int, Article> art = db->getNewsgroupArticles(2);
-                buffer2 << "Articles in newsgroup 2:\n";
-                for (std::pair<int, Article> a : art)
-                {
-                        buffer2 << "\n"
-                                << "a_id " << a.second.getId() << "\n"
-                                << a.second.getTitle() << "\nAuthor: " << a.second.getAuthor()
-                                << "\n"
-                                << a.second.getText() << "\n";
-                }
-                buffer2 << endl;
-                result = buffer2.str();
-        }
-
-        writeString(conn, result);
-}
-
 void serve_one(Server &server, VolatileDatabase *db)
 {
         auto conn = server.waitForActivity();
+        MessageProtocol protocol = MessageProtocol(conn, db);
+
         if (conn != nullptr)
         {
                 try
                 {
-                        process_request(conn, db);
+                        // process_request(conn, db);
+                        protocol.process_request();
                 }
                 catch (ConnectionClosedException &)
                 {

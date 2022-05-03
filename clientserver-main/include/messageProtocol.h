@@ -11,8 +11,10 @@ class MessageProtocol
 {
 public:
     MessageProtocol(shared_ptr<Connection> &conn, VolatileDatabase *db);
+    MessageProtocol(shared_ptr<Connection> &conn);
     int readNumber(const shared_ptr<Connection> &conn);
     Protocol readProtocol(const shared_ptr<Connection> &conn);
+    string readString(const std::shared_ptr<Connection> &conn);
     void writeString(const shared_ptr<Connection> &conn, const string &s);
     void writeInt(const shared_ptr<Connection> &conn, const int &value);
     void writeProtocol(const shared_ptr<Connection> &conn, const Protocol c);
@@ -20,6 +22,8 @@ public:
     void process_request();
 
 private:
+    void listNewsgroups();
+    void createNewsgroup();
     shared_ptr<Connection> conn;
     Database *db;
 };
