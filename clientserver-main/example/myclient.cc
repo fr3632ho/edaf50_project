@@ -143,6 +143,17 @@ int app(const Connection &conn)
                                 }
                                 writeProtocol(conn, Protocol::COM_END);
                                 break;
+
+                        case Protocol::COM_LIST_ART:
+                                writeProtocol(conn, Protocol::COM_LIST_NG);
+                                writeProtocol(conn, Protocol::PAR_NUM);
+                                while (cin >> p_num)
+                                {
+                                        writeNumber(conn, p_num);
+                                        break;
+                                }
+                                writeProtocol(conn, Protocol::COM_END);
+                                break;
                         default:
                                 cout << "default fall through" << endl;
                                 break;
@@ -168,6 +179,10 @@ int app(const Connection &conn)
                 case Protocol::ANS_DELETE_NG:
                         // method to handle ack/nack
                         cout << "COM_DELETE_NG Success" << endl;
+                        break;
+                case Protocol::ANS_LIST_ART:
+                        // method to handle ack/nack
+                        cout << "COM_LIST_ART Success" << endl;
                         break;
                 default:
                         cout << "default ANS FALLTHROUGH" << endl;
