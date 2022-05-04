@@ -4,17 +4,27 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <algorithm>
 
+using std::map;
 using std::pair;
 using std::string;
 using std::vector;
 
 VolatileDatabase::VolatileDatabase() {}
 
-void VolatileDatabase::createNewsgroup(string title)
+bool VolatileDatabase::createNewsgroup(string title)
 {
+    for (auto it = newsgroups.begin(); it != newsgroups.end(); ++it)
+    {
+        if (it->second.getTitle() == title)
+        {
+            return false;
+        }
+    }
     newsgroups.insert(std::pair<int, Newsgroup>(id, Newsgroup(title, id)));
     id += 1;
+    return true;
 }
 
 map<int, Newsgroup> VolatileDatabase::getNewsgroups()
@@ -22,10 +32,11 @@ map<int, Newsgroup> VolatileDatabase::getNewsgroups()
     return newsgroups;
 }
 
-string VolatileDatabase::deleteNewsgroup(int newsgroupId)
+bool VolatileDatabase::deleteNewsgroup(int newsgroupId)
 {
-    newsgroups.erase(newsgroupId);
-    return "";
+    size_t erased = newsgroups.erase(newsgroupId);
+    // 0 if nothing erased
+    return erased;
 }
 
 map<int, Article> VolatileDatabase::getNewsgroupArticles(int newsgroupId)

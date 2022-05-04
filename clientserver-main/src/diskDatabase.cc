@@ -61,7 +61,7 @@ void DiskDatabase::initDb()
     }
 }
 
-void DiskDatabase::createNewsgroup(string title)
+bool DiskDatabase::createNewsgroup(string title)
 {
     
     string ng_dir = path + std::to_string(id);
@@ -74,7 +74,9 @@ void DiskDatabase::createNewsgroup(string title)
         id++;
 
         fs::create_directory(ng_dir);
+        return true;
     }
+    return false;
 }
 
 Newsgroup DiskDatabase::getNewsgroup(int id)
@@ -117,14 +119,14 @@ map<int, Newsgroup> DiskDatabase::getNewsgroups()
 }
 
 
-string DiskDatabase::deleteNewsgroup(int newsgroupId)
+bool DiskDatabase::deleteNewsgroup(int newsgroupId)
 {
     // Delete subdir with id
     string ng_dir = path + std::to_string(newsgroupId);
     
     if (!fs::remove(ng_dir)) 
     {
-        return "";
+        return false;
     }
 
     id_newsgroup_map.erase(newsgroupId);
@@ -137,7 +139,7 @@ string DiskDatabase::deleteNewsgroup(int newsgroupId)
         idmap_outfile << key << " " << value << std::endl;
     }
     idmap_outfile.close();
-    return ng_dir;
+    return true;
 }
 
 map<int, Article> DiskDatabase::getNewsgroupArticles(int newsgroupId)
@@ -154,9 +156,12 @@ Article DiskDatabase::getArticle(int newsgroupId, int articleId)
 }
 
 void DiskDatabase::writeArticle(int newsgroupId, string title, string text, string author)
-{
-    string ng_dir = path + std::to_string(newsgroupId);
+{   
     
+    string a_dir = path + std::to_string(newsgroupId) + ;
+    std::ofstream a_outfile(ng_dir);
+    // o << "Hello, World!" << std::endl;
+    outfile.close();
 }
 
 void DiskDatabase::deleteArticle(int newsgroupId, int articleId)
