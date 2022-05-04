@@ -46,7 +46,8 @@ void DiskDatabase::initDb()
             vector<string> tokens;
             size_t pos = line.find(delimiter);
             int id = stoi(line.substr(0, pos));
-            if (id > max_id) {
+            if (id > max_id)
+            {
                 max_id = id;
             }
             string name = line.substr(pos + 1, line.length());
@@ -62,11 +63,11 @@ void DiskDatabase::initDb()
     }
 }
 
-void DiskDatabase::createNewsgroup(string title)
+bool DiskDatabase::createNewsgroup(string title)
 {
-    
+
     string ng_dir = path + std::to_string(id);
-    if (!fs::exists(ng_dir)) 
+    if (!fs::exists(ng_dir))
     {
         std::ofstream o(path + idmap);
         o << id << " " << title << std::endl;
@@ -81,7 +82,7 @@ Newsgroup DiskDatabase::getNewsgroup(int id)
 {
     Newsgroup ng(id_newsgroup_map[id], id);
     string dir = path + std::to_string(id);
-    for (auto & article : fs::directory_iterator(dir)) 
+    for (auto &article : fs::directory_iterator(dir))
     {
         string a_path = article.path().string();
         string a_name = a_path.substr(path.length(), a_path.length());
@@ -95,19 +96,19 @@ Newsgroup DiskDatabase::getNewsgroup(int id)
 map<int, Newsgroup> DiskDatabase::getNewsgroups()
 {
     map<int, Newsgroup> groups;
-    
+
     for (const auto &folder : fs::directory_iterator(path))
     {
         try
         {
-        string f_path = folder.path().string();
-        string f_name = f_path.substr(path.length(), f_path.length());
-        int id = std::stoi(f_name);
-        std::cout << id << std::endl;
-        Newsgroup ng = getNewsgroup(id);
-        groups.emplace(id, ng);
+            string f_path = folder.path().string();
+            string f_name = f_path.substr(path.length(), f_path.length());
+            int id = std::stoi(f_name);
+            std::cout << id << std::endl;
+            Newsgroup ng = getNewsgroup(id);
+            groups.emplace(id, ng);
         }
-        catch(const std::exception& e)
+        catch (const std::exception &e)
         {
             continue;
         }
@@ -116,12 +117,11 @@ map<int, Newsgroup> DiskDatabase::getNewsgroups()
     return groups;
 }
 
-
 string DiskDatabase::deleteNewsgroup(int newsgroupId)
 {
     // Delete subdir with id
     string ng_dir = path + std::to_string(newsgroupId);
-    if (!fs::remove(ng_dir)) 
+    if (!fs::remove(ng_dir))
     {
         return "";
     }

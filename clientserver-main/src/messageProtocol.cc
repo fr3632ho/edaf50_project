@@ -100,17 +100,6 @@ void MessageProtocol::listNewsgroups()
     map<int, Newsgroup> ngs = db->getNewsgroups();
     size_t numberOfNewsgroups = ngs.size();
 
-    std::stringstream buffer;
-    for (std::pair<int, Newsgroup> p : ngs)
-    {
-        buffer << " "
-               << p.first << " " << p.second.getTitle();
-    }
-    buffer << endl;
-    string result = buffer.str();
-
-    cout << "res: " << result << endl;
-
     writeProtocol(conn, Protocol::ANS_LIST_NG);
     writeProtocol(conn, Protocol::PAR_NUM);
     writeNumber(conn, numberOfNewsgroups);
@@ -147,15 +136,21 @@ void MessageProtocol::createNewsgroup()
         proto = readProtocol(conn);
     }
     //  TODO: Handle if already exists
-    db->createNewsgroup(ng_name.str());
+    bool result = db->createNewsgroup(ng_name.str());
 
     cout << "Recieved COM_END" << endl;
     writeProtocol(conn, Protocol::ANS_CREATE_NG);
-    writeProtocol(conn, Protocol::ANS_ACK);
-    /* if newsgroup already exists:
-    writeProtocol(conn, Protocol::ANS_NAK);
-    writeProtocol(conn, Protocol::ERR_NG_ALREADY_EXISTS);
-    */
+
+    if (result)
+    {
+        writeProtocol(conn, Protocol::ANS_ACK);
+    }
+    else
+    {
+        writeProtocol(conn, Protocol::ANS_NAK);
+        writeProtocol(conn, Protocol::ERR_NG_ALREADY_EXISTS);
+        cout << "ng already exists!!" << endl;
+    }
     writeProtocol(conn, Protocol::ANS_END);
 }
 
