@@ -126,21 +126,19 @@ void MessageProtocol::listNewsgroups()
 void MessageProtocol::createNewsgroup()
 {
     Protocol parameter_type = readProtocol(conn);
-    if (parameter_type == Protocol::PAR_STRING)
+
+    std::stringstream buffer;
+    int num = readNumber(conn);
+    cout << num << endl;
+    for (int i = 0; i < num; i++)
     {
-        std::stringstream buffer;
-        int num = readNumber(conn);
-        cout << num << endl;
-        for (int i = 0; i < num; i++)
-        {
-            buffer << conn->read();
-        }
-        // string parameter_value = readString(conn);
-        //  TODO: Handle if already exists
-        cout << buffer.str() << endl;
-        string ng_name = buffer.str();
-        db->createNewsgroup(ng_name);
+        buffer << conn->read();
     }
+    // string parameter_value = readString(conn);
+    //  TODO: Handle if already exists
+    cout << buffer.str() << endl;
+    string ng_name = buffer.str();
+    db->createNewsgroup(ng_name);
 
     Protocol end_byte = readProtocol(conn);
     if (end_byte == Protocol::COM_END)

@@ -82,7 +82,6 @@ void serve_one(Server &server, VolatileDatabase *db)
         {
                 try
                 {
-                        // process_request(conn, db);
                         protocol.process_request();
                 }
                 catch (ConnectionClosedException &)
