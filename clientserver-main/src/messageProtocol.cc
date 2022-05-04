@@ -75,6 +75,7 @@ void MessageProtocol::process_request()
         deleteNewsgroup();
         break;
     case Protocol::COM_LIST_ART:
+        listArticles();
         break;
     case Protocol::COM_CREATE_ART:
         break;
@@ -93,7 +94,7 @@ void MessageProtocol::listNewsgroups()
     Protocol end_byte = readProtocol(conn);
     if (end_byte == Protocol::COM_END)
     {
-        cout << "end byte" << endl;
+        cout << "Recieved COM_END" << endl;
     }
 
     map<int, Newsgroup> ngs = db->getNewsgroups();
@@ -113,38 +114,42 @@ void MessageProtocol::listNewsgroups()
     writeProtocol(conn, Protocol::ANS_LIST_NG);
     writeProtocol(conn, Protocol::PAR_NUM);
     writeNumber(conn, numberOfNewsgroups);
-    for (size_t n = 0; n < numberOfNewsgroups; n++)
+
+    // for (size_t n = 1; n <= numberOfNewsgroups; n++)
+    for (std::pair<int, Newsgroup> p : ngs)
     {
         writeProtocol(conn, Protocol::PAR_NUM);
-        writeNumber(conn, numberOfNewsgroups);
+        writeNumber(conn, p.first);
         writeProtocol(conn, Protocol::PAR_STRING);
-        writeString(conn, result);
+        writeNumber(conn, ngs.at(p.first).getTitle().size());
+        for (char c : ngs.at(p.first).getTitle())
+        {
+            conn->write(c);
+        }
     }
     writeProtocol(conn, Protocol::ANS_END);
 }
 
 void MessageProtocol::createNewsgroup()
 {
-    Protocol parameter_type = readProtocol(conn);
+    Protocol proto = readProtocol(conn);
 
-    std::stringstream buffer;
-    int num = readNumber(conn);
-    cout << num << endl;
-    for (int i = 0; i < num; i++)
+    std::stringstream ng_name;
+    while (proto != Protocol::COM_END)
     {
-        buffer << conn->read();
+        int size = readNumber(conn);
+
+        for (int i = 0; i < size; i++)
+            ng_name << conn->read();
+
+        cout << "name: " << ng_name.str() << endl;
+
+        proto = readProtocol(conn);
     }
-    // string parameter_value = readString(conn);
     //  TODO: Handle if already exists
-    cout << buffer.str() << endl;
-    string ng_name = buffer.str();
-    db->createNewsgroup(ng_name);
+    db->createNewsgroup(ng_name.str());
 
-    Protocol end_byte = readProtocol(conn);
-    if (end_byte == Protocol::COM_END)
-    {
-        cout << "end byte" << endl;
-    }
+    cout << "Recieved COM_END" << endl;
     writeProtocol(conn, Protocol::ANS_CREATE_NG);
     writeProtocol(conn, Protocol::ANS_ACK);
     /* if newsgroup already exists:
@@ -156,12 +161,26 @@ void MessageProtocol::createNewsgroup()
 
 void MessageProtocol::deleteNewsgroup()
 {
+    /*
     Protocol parameter_num = readProtocol(conn);
     if (parameter_num == Protocol::PAR_NUM)
     {
         int id = readNumber(conn);
         db->deleteNewsgroup(id);
     }
+    */
+    Protocol p = readProtocol(conn);
+    int id{};
+
+    while (p != Protocol::COM_END)
+    {
+        id = readNumber(conn);
+
+        cout << "id : " << id << endl;
+
+        p = readProtocol(conn);
+    }
+    db->deleteNewsgroup(id);
     writeProtocol(conn, Protocol::ANS_DELETE_NG);
     writeProtocol(conn, Protocol::ANS_ACK);
     /* if newsgroup does not exist:
@@ -178,13 +197,15 @@ void MessageProtocol::listArticles()
     {
         int id = readNumber(conn);
         map<int, Article> articles = db->getNewsgroupArticles(id);
-        std::stringstream buffer;
-        for (std::pair<int, Article> p : articles)
-        {
-            buffer << " "
-                   << p.first << " " << p.second.getTitle();
-        }
-        buffer << endl;
-        string result = buffer.str();
+
+        Protocol p = readProtocol(conn);
+        if (p == Protocol::COM_END)
+            cout << "com_end recieved " << endl;
+
+        writeProtocol(conn, Protocol::ANS_LIST_ART);
+        writeProtocol(conn, Protocol::ANS_ACK);
+        writeProtocol(conn, Protocol::PAR_NUM);
+        writeNumber(conn, 0);
+        writeProtocol(conn, Protocol::ANS_END);
     }
 }
