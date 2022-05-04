@@ -4,6 +4,7 @@
 #include "protocol.h"
 #include "volatileDatabase.h"
 #include "connection.h"
+#include <memory>
 
 using std::shared_ptr;
 
