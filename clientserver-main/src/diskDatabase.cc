@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <iostream>
 #include <fstream>
+#include <stdlib.h>
 //#include <sys/stat.h>
 
 using std::pair;
@@ -151,20 +152,40 @@ map<int, Article> DiskDatabase::getNewsgroupArticles(int newsgroupId)
 
 Article DiskDatabase::getArticle(int newsgroupId, int articleId)
 {
-    Newsgroup ng = getNewsgroup(newsgroupId);
-    return ng.getArticles().at(articleId);
+    string a_dir = path + std::to_string(newsgroupId) + "/" + std::to_string(articleId);
+    string line;
+    vector<string> lines;
+    std::ifstream file(a_dir);
+    if (file.is_open())
+    {
+        while (getline(file, line))
+        {
+            lines.push_back(line);
+        }
+        Article a(lines[0], lines[1], lines[2], articleId);
+        file.close();
+        return a;
+    }
 }
 
 void DiskDatabase::writeArticle(int newsgroupId, string title, string text, string author)
 {   
-    
-    string a_dir = path + std::to_string(newsgroupId) + ;
-    std::ofstream a_outfile(ng_dir);
-    // o << "Hello, World!" << std::endl;
-    outfile.close();
+    string ng_dir = path + std::to_string(newsgroupId);
+    if (!fs::exists(ng_dir)) 
+    {
+        int id = std::rand();
+        string a_dir = path + std::to_string(newsgroupId) + "/" + std::to_string(id);
+        std::ofstream a_outfile(a_dir);
+        a_outfile << title << std::endl;
+        a_outfile << text << std::endl;
+        a_outfile << author << std::endl;
+        a_outfile.close();
+
+    }
 }
 
 void DiskDatabase::deleteArticle(int newsgroupId, int articleId)
 {
-    // Delete certain article
+    string a_dir = path + std::to_string(newsgroupId) + "/" + std::to_string(articleId);
+    fs::remove(a_dir);
 }
