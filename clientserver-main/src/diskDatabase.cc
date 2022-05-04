@@ -7,7 +7,7 @@
 #include <filesystem>
 #include <iostream>
 #include <fstream>
-#include <stdlib.h>
+#include <random>
 //#include <sys/stat.h>
 
 using std::pair;
@@ -168,12 +168,19 @@ Article DiskDatabase::getArticle(int newsgroupId, int articleId)
     }
 }
 
+int getRandom() {
+    std::random_device rd;
+    std::default_random_engine gen(rd());
+    std::uniform_int_distribution<int> dist(0, 2147483647);
+    return dist(gen);
+}
+
 void DiskDatabase::writeArticle(int newsgroupId, string title, string text, string author)
 {   
     string ng_dir = path + std::to_string(newsgroupId);
     if (!fs::exists(ng_dir)) 
     {
-        int id = std::rand();
+        int id = getRandom();
         string a_dir = path + std::to_string(newsgroupId) + "/" + std::to_string(id);
         std::ofstream a_outfile(a_dir);
         a_outfile << title << std::endl;
