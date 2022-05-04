@@ -31,10 +31,9 @@ void DiskDatabase::initDb()
         string dir = path;
         dir.append(idmap);
         std::cout << dir << std::endl;
-        std::fflush(stdout);
-        std::ofstream o(dir);
+        std::ofstream outfile(dir);
         // o << "Hello, World!" << std::endl;
-        o.close();
+        outfile.close();
     }
     else
     {
@@ -68,9 +67,10 @@ void DiskDatabase::createNewsgroup(string title)
     string ng_dir = path + std::to_string(id);
     if (!fs::exists(ng_dir)) 
     {
-        std::ofstream o(path + idmap);
-        o << id << " " << title << std::endl;
-        o.close();
+        std::ofstream outfile;
+        outfile.open(path + idmap, std::ios_base::app);
+        outfile << id << " " << title << std::endl;
+        outfile.close();
         id++;
 
         fs::create_directory(ng_dir);
@@ -121,31 +121,42 @@ string DiskDatabase::deleteNewsgroup(int newsgroupId)
 {
     // Delete subdir with id
     string ng_dir = path + std::to_string(newsgroupId);
+    
     if (!fs::remove(ng_dir)) 
     {
         return "";
     }
+
+    id_newsgroup_map.erase(newsgroupId);
+
+    std::ofstream idmap_outfile;
+    idmap_outfile.open(path + idmap, std::ios::out);
+    for (auto const& [key, value] : id_newsgroup_map)
+    {
+        std::cout << "Pairs: " << key << " " << value << std::endl;
+        idmap_outfile << key << " " << value << std::endl;
+    }
+    idmap_outfile.close();
     return ng_dir;
 }
 
 map<int, Article> DiskDatabase::getNewsgroupArticles(int newsgroupId)
 {
 
-    // get all articles in subdir with id
-
-    // return ng.getArticles();
+    Newsgroup ng = getNewsgroup(newsgroupId);
+    return ng.getArticles();
 }
 
 Article DiskDatabase::getArticle(int newsgroupId, int articleId)
 {
-    // get certain article with id
-
-    // return newsgroups.at(newsgroupId).getArticles().at(articleId);
+    Newsgroup ng = getNewsgroup(newsgroupId);
+    return ng.getArticles().at(articleId);
 }
 
 void DiskDatabase::writeArticle(int newsgroupId, string title, string text, string author)
 {
-    // write new article in subdir with id
+    string ng_dir = path + std::to_string(newsgroupId);
+    
 }
 
 void DiskDatabase::deleteArticle(int newsgroupId, int articleId)
