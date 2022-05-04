@@ -156,14 +156,6 @@ void MessageProtocol::createNewsgroup()
 
 void MessageProtocol::deleteNewsgroup()
 {
-    /*
-    Protocol parameter_num = readProtocol(conn);
-    if (parameter_num == Protocol::PAR_NUM)
-    {
-        int id = readNumber(conn);
-        db->deleteNewsgroup(id);
-    }
-    */
     Protocol p = readProtocol(conn);
     int id{};
 
@@ -175,12 +167,20 @@ void MessageProtocol::deleteNewsgroup()
 
         p = readProtocol(conn);
     }
-    db->deleteNewsgroup(id);
     writeProtocol(conn, Protocol::ANS_DELETE_NG);
-    writeProtocol(conn, Protocol::ANS_ACK);
+
+    bool result = db->deleteNewsgroup(id);
+    if (result)
+    {
+        writeProtocol(conn, Protocol::ANS_ACK);
+    }
+    else
+    {
+        writeProtocol(conn, Protocol::ANS_NAK);
+        writeProtocol(conn, Protocol::ERR_NG_DOES_NOT_EXIST);
+    }
     /* if newsgroup does not exist:
-    writeProtocol(conn, Protocol::ANS_NAK);
-    writeProtocol(conn, Protocol::ERR_NG_DOES_NOT_EXIST);
+
     */
     writeProtocol(conn, Protocol::ANS_END);
 }

@@ -117,15 +117,16 @@ map<int, Newsgroup> DiskDatabase::getNewsgroups()
     return groups;
 }
 
-string DiskDatabase::deleteNewsgroup(int newsgroupId)
+bool DiskDatabase::deleteNewsgroup(int newsgroupId)
 {
     // Delete subdir with id
     string ng_dir = path + std::to_string(newsgroupId);
     if (!fs::remove(ng_dir))
     {
-        return "";
+        // jag ändrade detta för att få mitt att kompilera: behöver bool för error handling
+        return 0;
     }
-    return ng_dir;
+    return 0;
 }
 
 map<int, Article> DiskDatabase::getNewsgroupArticles(int newsgroupId)

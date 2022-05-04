@@ -19,7 +19,7 @@ public:
     ~DiskDatabase() = default;
     map<int, Newsgroup> getNewsgroups() override;
     bool createNewsgroup(string title) override;
-    string deleteNewsgroup(int newsgroupId) override;
+    bool deleteNewsgroup(int newsgroupId) override;
     map<int, Article> getNewsgroupArticles(int newsgroupId) override;
     Article getArticle(int articleId, int newsgroupId) override;
     void writeArticle(int newsgroupId, string title, string text, string author) override;

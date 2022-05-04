@@ -32,10 +32,11 @@ map<int, Newsgroup> VolatileDatabase::getNewsgroups()
     return newsgroups;
 }
 
-string VolatileDatabase::deleteNewsgroup(int newsgroupId)
+bool VolatileDatabase::deleteNewsgroup(int newsgroupId)
 {
-    newsgroups.erase(newsgroupId);
-    return "";
+    size_t erased = newsgroups.erase(newsgroupId);
+    // 0 if nothing erased
+    return erased;
 }
 
 map<int, Article> VolatileDatabase::getNewsgroupArticles(int newsgroupId)
