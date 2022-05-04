@@ -3,6 +3,8 @@
 #include "connectionclosedexception.h"
 #include "server.h"
 #include "volatileDatabase.h"
+#include "database.h"
+#include "diskDatabase.h"
 #include "messageProtocol.h"
 #include "protocol.h"
 
@@ -73,7 +75,7 @@ Server init(int argc, char *argv[])
         return server;
 }
 
-void serve_one(Server &server, VolatileDatabase *db)
+void serve_one(Server &server, Database *db)
 {
         auto conn = server.waitForActivity();
         MessageProtocol protocol = MessageProtocol(conn, db);
@@ -101,7 +103,7 @@ void serve_one(Server &server, VolatileDatabase *db)
 int main(int argc, char *argv[])
 {
         auto server = init(argc, argv);
-        VolatileDatabase *db = new VolatileDatabase{};
+        Database *db = new DiskDatabase{};
 
         while (true)
         {
