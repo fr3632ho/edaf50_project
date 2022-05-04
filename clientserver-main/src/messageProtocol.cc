@@ -63,6 +63,7 @@ void MessageProtocol::process_request()
         createNewsgroup();
         break;
     case Protocol::COM_DELETE_NG:
+        deleteNewsgroup();
         break;
     case Protocol::COM_LIST_ART:
         break;
@@ -80,7 +81,11 @@ void MessageProtocol::process_request()
 
 void MessageProtocol::listNewsgroups()
 {
-    // Protocol end_byte = readProtocol(conn);
+    Protocol end_byte = readProtocol(conn);
+    if (end_byte == Protocol::COM_END)
+    {
+        cout << "end byte" << endl;
+    }
 
     map<int, Newsgroup> ngs = db->getNewsgroups();
     size_t numberOfNewsgroups = ngs.size();
@@ -88,11 +93,13 @@ void MessageProtocol::listNewsgroups()
     std::stringstream buffer;
     for (std::pair<int, Newsgroup> p : ngs)
     {
-        buffer << "\n"
+        buffer << " "
                << p.first << " " << p.second.getTitle();
     }
     buffer << endl;
     string result = buffer.str();
+
+    cout << "res: " << result << endl;
 
     writeProtocol(conn, Protocol::ANS_LIST_NG);
     writeProtocol(conn, Protocol::PAR_NUM);
@@ -114,12 +121,30 @@ void MessageProtocol::createNewsgroup()
     Protocol end_byte = readProtocol(conn);
     if (end_byte == Protocol::COM_END)
     {
+        cout << "end byte" << endl;
         writeProtocol(conn, Protocol::ANS_CREATE_NG);
         writeProtocol(conn, Protocol::ANS_ACK);
         /* if newsgroup already exists:
         writeProtocol(conn, Protocol::ANS_NAK);
-        writeProtocol(conn, Protocol::ERR_NG_DOES_NOT_EXIST);
+        writeProtocol(conn, Protocol::ERR_NG_ALREADY_EXISTS);
         */
         writeProtocol(conn, Protocol::ANS_END);
     }
+}
+
+void MessageProtocol::deleteNewsgroup()
+{
+    Protocol parameter_num = readProtocol(conn);
+    if (parameter_num == Protocol::PAR_NUM)
+    {
+        int id = readNumber(conn);
+        db->deleteNewsgroup(id);
+    }
+    writeProtocol(conn, Protocol::ANS_CREATE_NG);
+    writeProtocol(conn, Protocol::ANS_ACK);
+    /* if newsgroup does not exist:
+    writeProtocol(conn, Protocol::ANS_NAK);
+    writeProtocol(conn, Protocol::ERR_NG_DOES_NOT_EXIST);
+    */
+    writeProtocol(conn, Protocol::ANS_END);
 }

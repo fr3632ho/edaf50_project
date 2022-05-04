@@ -101,6 +101,7 @@ void listNewsgroupsResponse(const Connection &conn)
         Protocol par_string = static_cast<Protocol>(readChar(conn));
         reply = readString(conn);
         cout << nbr << " " << reply << endl;
+        Protocol end_byte = static_cast<Protocol>(readChar(conn));
 }
 
 int app(const Connection &conn)
@@ -111,18 +112,18 @@ int app(const Connection &conn)
         while (cin >> input)
         // while (getline(cin, input))
         {
+                Protocol command = static_cast<Protocol>(input);
                 string parameter_string;
+                int p_num = 0;
                 try
                 {
-                        switch (input)
+                        switch (command)
                         {
-                        case 1:
-                                cout << "COM_LIST_NG" << endl;
+                        case Protocol::COM_LIST_NG:
                                 writeProtocol(conn, Protocol::COM_LIST_NG);
                                 writeProtocol(conn, Protocol::COM_END);
                                 break;
-                        case 2:
-                                cout << "COM_CREATE_NG" << endl;
+                        case Protocol::COM_CREATE_NG:
                                 writeProtocol(conn, Protocol::COM_CREATE_NG);
                                 writeProtocol(conn, Protocol::PAR_STRING);
                                 while (getline(cin, parameter_string))
@@ -132,9 +133,18 @@ int app(const Connection &conn)
                                 }
                                 writeProtocol(conn, Protocol::COM_END);
                                 break;
+                        case Protocol::COM_DELETE_NG:
+                                writeProtocol(conn, Protocol::COM_DELETE_NG);
+                                writeProtocol(conn, Protocol::PAR_NUM);
+                                while (cin >> p_num)
+                                {
+                                        writeNumber(conn, p_num);
+                                        break;
+                                }
+                                writeProtocol(conn, Protocol::COM_END);
+                                break;
                         default:
-                                // writeProtocol(conn, Protocol::COM_LIST_NG);
-                                // writeProtocol(conn, Protocol::COM_END);
+                                cout << "default fall through" << endl;
                                 break;
                         }
                 }
@@ -149,10 +159,18 @@ int app(const Connection &conn)
                 {
                 case Protocol::ANS_LIST_NG:
                         listNewsgroupsResponse(conn);
+                        cout << "COM_LIST_NG" << endl;
                         break;
                 case Protocol::ANS_CREATE_NG:
+                        // method to handle ack/nack
+                        cout << "COM_CREATE_NG Success" << endl;
+                        break;
+                case Protocol::ANS_DELETE_NG:
+                        // method to handle ack/nack
+                        cout << "COM_DELETE_NG Success" << endl;
                         break;
                 default:
+                        cout << "default ANS FALLTHROUGH" << endl;
                         break;
                 }
         }

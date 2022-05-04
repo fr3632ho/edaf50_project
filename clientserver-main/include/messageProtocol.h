@@ -24,6 +24,7 @@ public:
 private:
     void listNewsgroups();
     void createNewsgroup();
+    void deleteNewsgroup();
     shared_ptr<Connection> conn;
     Database *db;
 };
