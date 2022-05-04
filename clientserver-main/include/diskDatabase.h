@@ -31,5 +31,6 @@ private:
     const string path;
     int id{1};
     void initDb();
+    Newsgroup getNewsgroup(int);
 };
 #endif

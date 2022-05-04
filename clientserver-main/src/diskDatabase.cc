@@ -38,15 +38,21 @@ void DiskDatabase::initDb()
     }
     else
     {
+        int max_id = 1;
         string line, delimiter = " ", token;
         std::ifstream file(path + idmap);
         while (getline(file, line))
         {
             vector<string> tokens;
             size_t pos = line.find(delimiter);
-            id_newsgroup_map.emplace(stoi(line.substr(0, pos)),
-                                     line.substr(pos + 1, line.length()));
+            int id = stoi(line.substr(0, pos));
+            if (id > max_id) {
+                max_id = id;
+            }
+            string name = line.substr(pos + 1, line.length());
+            id_newsgroup_map.emplace(id, name);
         }
+        this->id = max_id + 1;
     }
 
     // for testing
@@ -58,37 +64,68 @@ void DiskDatabase::initDb()
 
 void DiskDatabase::createNewsgroup(string title)
 {
+    
+    string ng_dir = path + std::to_string(id);
+    if (!fs::exists(ng_dir)) 
+    {
+        std::ofstream o(path + idmap);
+        o << id << " " << title << std::endl;
+        o.close();
+        id++;
+
+        fs::create_directory(ng_dir);
+    }
+}
+
+Newsgroup DiskDatabase::getNewsgroup(int id)
+{
+    Newsgroup ng(id_newsgroup_map[id], id);
+    string dir = path + std::to_string(id);
+    for (auto & article : fs::directory_iterator(dir)) 
+    {
+        string a_path = article.path().string();
+        string a_name = a_path.substr(path.length(), a_path.length());
+        int a_id = std::stoi(a_name);
+        Article a = getArticle(id, a_id);
+        ng.writeArticle(a.getTitle(), a.getText(), a.getAuthor());
+    }
+    return ng;
 }
 
 map<int, Newsgroup> DiskDatabase::getNewsgroups()
 {
     map<int, Newsgroup> groups;
+    
     for (const auto &folder : fs::directory_iterator(path))
     {
+        try
+        {
         string f_path = folder.path().string();
-        int id = stoi(f_path.substr(f_path.length() - path.length(), f_path.length() - 1));
+        string f_name = f_path.substr(path.length(), f_path.length());
+        int id = std::stoi(f_name);
         std::cout << id << std::endl;
         Newsgroup ng = getNewsgroup(id);
         groups.emplace(id, ng);
+        }
+        catch(const std::exception& e)
+        {
+            continue;
+        }
     }
+
+    return groups;
 }
 
-Newsgroup getNewsgroup(int id)
-{
-    try
-    {
-    }
-    catch (std::invalid_argument)
-    {
-        return Newsgroup("none", -1);
-    }
-}
 
 string DiskDatabase::deleteNewsgroup(int newsgroupId)
 {
     // Delete subdir with id
-
-    return "";
+    string ng_dir = path + std::to_string(newsgroupId);
+    if (!fs::remove(ng_dir)) 
+    {
+        return "";
+    }
+    return ng_dir;
 }
 
 map<int, Article> DiskDatabase::getNewsgroupArticles(int newsgroupId)
