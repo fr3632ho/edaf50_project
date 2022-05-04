@@ -15,7 +15,7 @@ using std::vector;
 class DiskDatabase : public Database
 {
 public:
-    DiskDatabase(const string& path = "db/");
+    DiskDatabase(const string &path = "db/");
     ~DiskDatabase() = default;
     map<int, Newsgroup> getNewsgroups() override;
     void createNewsgroup(string title) override;
@@ -27,6 +27,7 @@ public:
 
 private:
     map<int, Newsgroup> newsgroups;
+    map<int, string> id_newsgroup_map;
     const string path;
     int id{1};
     void initDb();

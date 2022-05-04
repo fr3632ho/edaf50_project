@@ -9,42 +9,79 @@
 #include <fstream>
 //#include <sys/stat.h>
 
-
 using std::pair;
 using std::string;
-using std::vector;
 using std::system;
+using std::vector;
 namespace fs = std::filesystem;
 
-DiskDatabase::DiskDatabase(const string& path) : path(path)
+const string idmap = "id_newsgroups_map.txt";
+
+DiskDatabase::DiskDatabase(const string &path) : path(path)
 {
     initDb();
 }
 
-void DiskDatabase::initDb() {
-    if (!fs::exists(path)) {
+void DiskDatabase::initDb()
+{
+    if (!fs::exists(path))
+    {
         fs::create_directory(path);
-        
+
         string dir = path;
-        dir.append("idnewsgroupsmap.txt");
+        dir.append(idmap);
         std::cout << dir << std::endl;
         std::fflush(stdout);
         std::ofstream o(dir);
-        o << "Hello, World!" << std::endl;
+        // o << "Hello, World!" << std::endl;
         o.close();
     }
+    else
+    {
+        string line, delimiter = " ", token;
+        std::ifstream file(path + idmap);
+        while (getline(file, line))
+        {
+            vector<string> tokens;
+            size_t pos = line.find(delimiter);
+            id_newsgroup_map.emplace(stoi(line.substr(0, pos)),
+                                     line.substr(pos + 1, line.length()));
+        }
+    }
 
+    // for testing
+    for (const auto &entry : id_newsgroup_map)
+    {
+        std::cout << entry.first << " -> " << entry.second << std::endl;
+    }
 }
-
 
 void DiskDatabase::createNewsgroup(string title)
 {
-
 }
 
 map<int, Newsgroup> DiskDatabase::getNewsgroups()
 {
+    map<int, Newsgroup> groups;
+    for (const auto &folder : fs::directory_iterator(path))
+    {
+        string f_path = folder.path().string();
+        int id = stoi(f_path.substr(f_path.length() - path.length(), f_path.length() - 1));
+        std::cout << id << std::endl;
+        Newsgroup ng = getNewsgroup(id);
+        groups.emplace(id, ng);
+    }
+}
 
+Newsgroup getNewsgroup(int id)
+{
+    try
+    {
+    }
+    catch (std::invalid_argument)
+    {
+        return Newsgroup("none", -1);
+    }
 }
 
 string DiskDatabase::deleteNewsgroup(int newsgroupId)
