@@ -5,12 +5,15 @@
 #include <string>
 #include <map>
 #include <filesystem>
+#include <iostream>
 //#include <sys/stat.h>
 
 
 using std::pair;
 using std::string;
 using std::vector;
+using std::system;
+namespace fs = std::filesystem;
 
 DiskDatabase::DiskDatabase(const string& path) : path(path)
 {
@@ -18,14 +21,15 @@ DiskDatabase::DiskDatabase(const string& path) : path(path)
 }
 
 void DiskDatabase::initDb() {
-    if (!std::filesystem::exists(path)) {
-        std::filesystem::create_directory(path);
+    if (!fs::exists(path)) {
+        fs::create_directory(path);
     }
 }
 
 
 void DiskDatabase::createNewsgroup(string title)
 {
+    
 }
 
 map<int, Newsgroup> DiskDatabase::getNewsgroups()
