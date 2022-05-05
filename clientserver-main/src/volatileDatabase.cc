@@ -1,10 +1,12 @@
 #include "volatileDatabase.h"
+#include "protocol.h"
 
 #include <iostream>
 #include <vector>
 #include <string>
 #include <map>
 #include <algorithm>
+#include <stdexcept>
 
 using std::map;
 using std::pair;
@@ -54,7 +56,18 @@ map<int, Article> VolatileDatabase::getNewsgroupArticles(int newsgroupId)
 
 Article VolatileDatabase::getArticle(int newsgroupId, int articleId)
 {
-    return newsgroups.at(newsgroupId).getArticles().at(articleId);
+    if (newsgroups.find(newsgroupId) == newsgroups.end())
+    {
+        throw Protocol::ERR_NG_DOES_NOT_EXIST;
+    }
+    Newsgroup ng = newsgroups.at(newsgroupId);
+
+    map<int, Article> articles = ng.getArticles();
+    if (articles.find(articleId) == articles.end())
+    {
+        throw Protocol::ERR_ART_DOES_NOT_EXIST;
+    }
+    return articles.at(articleId);
 }
 
 bool VolatileDatabase::writeArticle(int newsgroupId, string title, string text, string author)

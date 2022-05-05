@@ -6,6 +6,7 @@ using std::string;
 using std::vector;
 
 Article::Article(string title, string author, string text, int id) : author(author), text(text), title(title), id(id) {}
+Article::Article() {}
 
 string Article::getTitle()
 {

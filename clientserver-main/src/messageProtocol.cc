@@ -356,30 +356,47 @@ void MessageProtocol::getArticle()
     if (com_end == Protocol::COM_END)
     {
         writeProtocol(conn, Protocol::ANS_GET_ART);
-        Article article = db->getArticle(newsgroup_id, article_id);
-
-        writeProtocol(conn, Protocol::ANS_ACK);
-
-        writeProtocol(conn, Protocol::PAR_STRING);
-        writeNumber(conn, article.getTitle().size());
-        for (char c : article.getTitle())
+        try
         {
-            conn->write(c);
+            Article article = db->getArticle(newsgroup_id, article_id);
+            writeProtocol(conn, Protocol::ANS_ACK);
+
+            writeProtocol(conn, Protocol::PAR_STRING);
+            writeNumber(conn, article.getTitle().size());
+            for (char c : article.getTitle())
+            {
+                conn->write(c);
+            }
+
+            writeProtocol(conn, Protocol::PAR_STRING);
+            writeNumber(conn, article.getAuthor().size());
+            for (char c : article.getAuthor())
+            {
+                conn->write(c);
+            }
+
+            writeProtocol(conn, Protocol::PAR_STRING);
+            writeNumber(conn, article.getText().size());
+            for (char c : article.getText())
+            {
+                conn->write(c);
+            }
+        }
+        catch (const Protocol e)
+        {
+            if (e == Protocol::ERR_NG_DOES_NOT_EXIST)
+            {
+                writeProtocol(conn, Protocol::ANS_NAK);
+                writeProtocol(conn, Protocol::ERR_NG_DOES_NOT_EXIST);
+            }
+
+            if (e == Protocol::ERR_ART_DOES_NOT_EXIST)
+            {
+                writeProtocol(conn, Protocol::ANS_NAK);
+                writeProtocol(conn, Protocol::ERR_ART_DOES_NOT_EXIST);
+            }
         }
 
-        writeProtocol(conn, Protocol::PAR_STRING);
-        writeNumber(conn, article.getAuthor().size());
-        for (char c : article.getAuthor())
-        {
-            conn->write(c);
-        }
-
-        writeProtocol(conn, Protocol::PAR_STRING);
-        writeNumber(conn, article.getText().size());
-        for (char c : article.getText())
-        {
-            conn->write(c);
-        }
         writeProtocol(conn, Protocol::ANS_END);
     }
 }

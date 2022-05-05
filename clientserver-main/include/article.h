@@ -14,6 +14,7 @@ class Article
 {
 public:
     Article(string title, string author, string text, int id);
+    Article();
     string getTitle();
     string getText();
     string getAuthor();
