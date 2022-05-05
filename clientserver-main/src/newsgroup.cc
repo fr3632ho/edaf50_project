@@ -27,9 +27,11 @@ map<int, Article> Newsgroup::getArticles()
     return articles;
 }
 
-void Newsgroup::deleteArticle(int articleId)
+bool Newsgroup::deleteArticle(int articleId)
 {
-    articles.erase(articleId);
+    size_t erased = articles.erase(articleId);
+    // 0 if nothing erased
+    return erased;
 }
 
 void Newsgroup::writeArticle(string title, string text, string author)

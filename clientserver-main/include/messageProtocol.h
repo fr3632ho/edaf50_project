@@ -20,6 +20,7 @@ public:
     void writeNumber(const shared_ptr<Connection> &conn, int value);
     void writeProtocol(const shared_ptr<Connection> &conn, const Protocol c);
     void writeChar(const shared_ptr<Connection> &conn, const char &c);
+    string readStringP(const std::shared_ptr<Connection> &conn);
     void process_request();
 
 private:
@@ -27,6 +28,9 @@ private:
     void createNewsgroup();
     void deleteNewsgroup();
     void listArticles();
+    void createArticle();
+    void deleteArticle();
+    void getArticle();
     shared_ptr<Connection> conn;
     Database *db;
 };

@@ -46,7 +46,8 @@ void DiskDatabase::initDb()
             vector<string> tokens;
             size_t pos = line.find(delimiter);
             int id = stoi(line.substr(0, pos));
-            if (id > max_id) {
+            if (id > max_id)
+            {
                 max_id = id;
             }
             string name = line.substr(pos + 1, line.length());
@@ -64,9 +65,9 @@ void DiskDatabase::initDb()
 
 bool DiskDatabase::createNewsgroup(string title)
 {
-    
+
     string ng_dir = path + std::to_string(id);
-    if (!fs::exists(ng_dir)) 
+    if (!fs::exists(ng_dir))
     {
         std::ofstream outfile;
         outfile.open(path + idmap, std::ios_base::app);
@@ -84,7 +85,7 @@ Newsgroup DiskDatabase::getNewsgroup(int id)
 {
     Newsgroup ng(id_newsgroup_map[id], id);
     string dir = path + std::to_string(id);
-    for (auto & article : fs::directory_iterator(dir)) 
+    for (auto &article : fs::directory_iterator(dir))
     {
         string a_path = article.path().string();
         string a_name = a_path.substr(path.length(), a_path.length());
@@ -98,19 +99,19 @@ Newsgroup DiskDatabase::getNewsgroup(int id)
 map<int, Newsgroup> DiskDatabase::getNewsgroups()
 {
     map<int, Newsgroup> groups;
-    
+
     for (const auto &folder : fs::directory_iterator(path))
     {
         try
         {
-        string f_path = folder.path().string();
-        string f_name = f_path.substr(path.length(), f_path.length());
-        int id = std::stoi(f_name);
-        std::cout << id << std::endl;
-        Newsgroup ng = getNewsgroup(id);
-        groups.emplace(id, ng);
+            string f_path = folder.path().string();
+            string f_name = f_path.substr(path.length(), f_path.length());
+            int id = std::stoi(f_name);
+            std::cout << id << std::endl;
+            Newsgroup ng = getNewsgroup(id);
+            groups.emplace(id, ng);
         }
-        catch(const std::exception& e)
+        catch (const std::exception &e)
         {
             continue;
         }
@@ -119,13 +120,12 @@ map<int, Newsgroup> DiskDatabase::getNewsgroups()
     return groups;
 }
 
-
 bool DiskDatabase::deleteNewsgroup(int newsgroupId)
 {
     // Delete subdir with id
     string ng_dir = path + std::to_string(newsgroupId);
-    
-    if (!fs::remove(ng_dir)) 
+
+    if (!fs::remove(ng_dir))
     {
         return false;
     }
@@ -134,7 +134,7 @@ bool DiskDatabase::deleteNewsgroup(int newsgroupId)
 
     std::ofstream idmap_outfile;
     idmap_outfile.open(path + idmap, std::ios::out);
-    for (auto const& [key, value] : id_newsgroup_map)
+    for (auto const &[key, value] : id_newsgroup_map)
     {
         std::cout << "Pairs: " << key << " " << value << std::endl;
         idmap_outfile << key << " " << value << std::endl;
@@ -168,17 +168,19 @@ Article DiskDatabase::getArticle(int newsgroupId, int articleId)
     }
 }
 
-int getRandom() {
+int getRandom()
+{
     std::random_device rd;
     std::default_random_engine gen(rd());
     std::uniform_int_distribution<int> dist(0, 2147483647);
     return dist(gen);
 }
 
-void DiskDatabase::writeArticle(int newsgroupId, string title, string text, string author)
-{   
+// changed to bool for error handling
+bool DiskDatabase::writeArticle(int newsgroupId, string title, string text, string author)
+{
     string ng_dir = path + std::to_string(newsgroupId);
-    if (!fs::exists(ng_dir)) 
+    if (!fs::exists(ng_dir))
     {
         int id = getRandom();
         string a_dir = path + std::to_string(newsgroupId) + "/" + std::to_string(id);
@@ -187,11 +189,11 @@ void DiskDatabase::writeArticle(int newsgroupId, string title, string text, stri
         a_outfile << text << std::endl;
         a_outfile << author << std::endl;
         a_outfile.close();
-
     }
 }
 
-void DiskDatabase::deleteArticle(int newsgroupId, int articleId)
+// changed to bool for error handling
+int DiskDatabase::deleteArticle(int newsgroupId, int articleId)
 {
     string a_dir = path + std::to_string(newsgroupId) + "/" + std::to_string(articleId);
     fs::remove(a_dir);

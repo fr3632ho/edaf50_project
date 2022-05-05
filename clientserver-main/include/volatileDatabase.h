@@ -21,9 +21,9 @@ public:
     bool createNewsgroup(string title) override;
     bool deleteNewsgroup(int newsgroupId) override;
     map<int, Article> getNewsgroupArticles(int newsgroupId) override;
-    Article getArticle(int articleId, int newsgroupId) override;
-    void writeArticle(int newsgroupId, string title, string text, string author) override;
-    void deleteArticle(int articleId, int newsgroupId) override;
+    Article getArticle(int newsgroupId, int articleId) override;
+    bool writeArticle(int newsgroupId, string title, string text, string author) override;
+    int deleteArticle(int newsgroupId, int articleId) override;
 
 private:
     map<int, Newsgroup> newsgroups;

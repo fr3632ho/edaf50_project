@@ -47,6 +47,17 @@ string MessageProtocol::readString(const std::shared_ptr<Connection> &conn)
     return s;
 }
 
+string MessageProtocol::readStringP(const std::shared_ptr<Connection> &conn)
+{
+    int number_of_chars = readNumber(conn);
+    std::stringstream par_string;
+    for (int i = 0; i < number_of_chars; ++i)
+    {
+        par_string << conn->read();
+    }
+    return par_string.str();
+}
+
 void MessageProtocol::writeProtocol(const shared_ptr<Connection> &conn, Protocol p)
 {
     conn->write(static_cast<char>(p));
@@ -78,10 +89,13 @@ void MessageProtocol::process_request()
         listArticles();
         break;
     case Protocol::COM_CREATE_ART:
+        createArticle();
         break;
     case Protocol::COM_DELETE_ART:
+        deleteArticle();
         break;
     case Protocol::COM_GET_ART:
+        getArticle();
         break;
     default:
         cout << "Error..." << endl;
@@ -110,8 +124,8 @@ void MessageProtocol::listNewsgroups()
         writeProtocol(conn, Protocol::PAR_NUM);
         writeNumber(conn, p.first);
         writeProtocol(conn, Protocol::PAR_STRING);
-        writeNumber(conn, ngs.at(p.first).getTitle().size());
-        for (char c : ngs.at(p.first).getTitle())
+        writeNumber(conn, p.second.getTitle().size());
+        for (char c : p.second.getTitle())
         {
             conn->write(c);
         }
@@ -191,16 +205,181 @@ void MessageProtocol::listArticles()
     if (parameter_num == Protocol::PAR_NUM)
     {
         int id = readNumber(conn);
-        map<int, Article> articles = db->getNewsgroupArticles(id);
-
         Protocol p = readProtocol(conn);
+
         if (p == Protocol::COM_END)
+        {
             cout << "com_end recieved " << endl;
+        }
 
         writeProtocol(conn, Protocol::ANS_LIST_ART);
+        map<int, Article> articles = db->getNewsgroupArticles(id);
+        int numberOfArticles = articles.size();
+
+        if (articles.find(0) != articles.end())
+        {
+            writeProtocol(conn, Protocol::ANS_NAK);
+            writeProtocol(conn, Protocol::ERR_NG_DOES_NOT_EXIST);
+        }
+        else
+        {
+            writeProtocol(conn, Protocol::ANS_ACK);
+            writeProtocol(conn, Protocol::PAR_NUM);
+            writeNumber(conn, numberOfArticles);
+
+            // for (size_t n = 1; n <= numberOfNewsgroups; n++)
+            for (std::pair<int, Article> p : articles)
+            {
+                writeProtocol(conn, Protocol::PAR_NUM);
+                writeNumber(conn, p.first);
+                writeProtocol(conn, Protocol::PAR_STRING);
+                writeNumber(conn, p.second.getTitle().size());
+                for (char c : p.second.getTitle())
+                {
+                    conn->write(c);
+                }
+            }
+        }
+
+        writeProtocol(conn, Protocol::ANS_END);
+    }
+}
+
+void MessageProtocol::createArticle()
+{
+    int newsgroup_id;
+    string title;
+    string author;
+    string text;
+
+    Protocol parameter_num = readProtocol(conn);
+    if (parameter_num == Protocol::PAR_NUM)
+    {
+        newsgroup_id = readNumber(conn);
+    }
+
+    Protocol param_string = readProtocol(conn);
+    if (param_string == Protocol::PAR_STRING)
+    {
+        title = readStringP(conn);
+    }
+
+    param_string = readProtocol(conn);
+    if (param_string == Protocol::PAR_STRING)
+    {
+        author = readStringP(conn);
+    }
+
+    param_string = readProtocol(conn);
+    if (param_string == Protocol::PAR_STRING)
+    {
+        text = readStringP(conn);
+    }
+
+    Protocol com_end = readProtocol(conn);
+    if (com_end == Protocol::COM_END)
+    {
+        writeProtocol(conn, Protocol::ANS_CREATE_ART);
+        bool result = db->writeArticle(newsgroup_id, title, text, author);
+        if (result)
+        {
+            writeProtocol(conn, Protocol::ANS_ACK);
+        }
+        else
+        {
+            writeProtocol(conn, Protocol::ANS_NAK);
+            writeProtocol(conn, Protocol::ERR_NG_DOES_NOT_EXIST);
+        }
+        writeProtocol(conn, Protocol::ANS_END);
+    }
+}
+
+void MessageProtocol::deleteArticle()
+{
+    int newsgroup_id;
+    int article_id;
+
+    Protocol parameter_num = readProtocol(conn);
+    if (parameter_num == Protocol::PAR_NUM)
+    {
+        newsgroup_id = readNumber(conn);
+    }
+
+    parameter_num = readProtocol(conn);
+    if (parameter_num == Protocol::PAR_NUM)
+    {
+        article_id = readNumber(conn);
+    }
+    Protocol com_end = readProtocol(conn);
+    if (com_end == Protocol::COM_END)
+    {
+        writeProtocol(conn, Protocol::ANS_DELETE_ART);
+        int result = db->deleteArticle(newsgroup_id, article_id);
+        if (result == 1)
+        {
+            writeProtocol(conn, Protocol::ANS_ACK);
+        }
+        else
+        {
+            writeProtocol(conn, Protocol::ANS_NAK);
+            if (result == 2)
+            {
+                writeProtocol(conn, Protocol::ERR_NG_DOES_NOT_EXIST);
+            }
+
+            if (result == 3)
+            {
+                writeProtocol(conn, Protocol::ERR_ART_DOES_NOT_EXIST);
+            }
+        }
+        writeProtocol(conn, Protocol::ANS_END);
+    }
+}
+
+void MessageProtocol::getArticle()
+{
+    int newsgroup_id;
+    int article_id;
+
+    Protocol parameter_num = readProtocol(conn);
+    if (parameter_num == Protocol::PAR_NUM)
+    {
+        newsgroup_id = readNumber(conn);
+    }
+
+    parameter_num = readProtocol(conn);
+    if (parameter_num == Protocol::PAR_NUM)
+    {
+        article_id = readNumber(conn);
+    }
+    Protocol com_end = readProtocol(conn);
+    if (com_end == Protocol::COM_END)
+    {
+        writeProtocol(conn, Protocol::ANS_GET_ART);
+        Article article = db->getArticle(newsgroup_id, article_id);
+
         writeProtocol(conn, Protocol::ANS_ACK);
-        writeProtocol(conn, Protocol::PAR_NUM);
-        writeNumber(conn, 0);
+
+        writeProtocol(conn, Protocol::PAR_STRING);
+        writeNumber(conn, article.getTitle().size());
+        for (char c : article.getTitle())
+        {
+            conn->write(c);
+        }
+
+        writeProtocol(conn, Protocol::PAR_STRING);
+        writeNumber(conn, article.getAuthor().size());
+        for (char c : article.getAuthor())
+        {
+            conn->write(c);
+        }
+
+        writeProtocol(conn, Protocol::PAR_STRING);
+        writeNumber(conn, article.getText().size());
+        for (char c : article.getText())
+        {
+            conn->write(c);
+        }
         writeProtocol(conn, Protocol::ANS_END);
     }
 }

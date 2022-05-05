@@ -19,9 +19,9 @@ public:
     virtual bool createNewsgroup(string title) = 0;
     virtual bool deleteNewsgroup(int newsgroupId) = 0;
     virtual map<int, Article> getNewsgroupArticles(int newsgroupId) = 0;
-    virtual Article getArticle(int articleId, int newsgroupId) = 0;
-    virtual void writeArticle(int newsgroupId, string title, string text, string author) = 0;
-    virtual void deleteArticle(int articleId, int newsgroupId) = 0;
+    virtual Article getArticle(int newsgroupId, int articleId) = 0;
+    virtual bool writeArticle(int newsgroupId, string title, string text, string author) = 0;
+    virtual int deleteArticle(int newsgroupId, int articleId) = 0;
 };
 
 #endif

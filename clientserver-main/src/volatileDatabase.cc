@@ -41,6 +41,13 @@ bool VolatileDatabase::deleteNewsgroup(int newsgroupId)
 
 map<int, Article> VolatileDatabase::getNewsgroupArticles(int newsgroupId)
 {
+    if (newsgroups.find(newsgroupId) == newsgroups.end())
+    {
+        // key 0 represents newsgroup not found
+        map<int, Article> ng_not_found;
+        ng_not_found.insert(std::pair<int, Article>(0, Article("", "", "", 0)));
+        return ng_not_found;
+    }
     Newsgroup &ng = newsgroups.at(newsgroupId);
     return ng.getArticles();
 }
@@ -50,14 +57,28 @@ Article VolatileDatabase::getArticle(int newsgroupId, int articleId)
     return newsgroups.at(newsgroupId).getArticles().at(articleId);
 }
 
-void VolatileDatabase::writeArticle(int newsgroupId, string title, string text, string author)
+bool VolatileDatabase::writeArticle(int newsgroupId, string title, string text, string author)
 {
+    if (newsgroups.find(newsgroupId) == newsgroups.end())
+    {
+        return false;
+    }
     Newsgroup &ng = newsgroups.at(newsgroupId);
     ng.writeArticle(title, text, author);
+    return true;
 }
 
-void VolatileDatabase::deleteArticle(int newsgroupId, int articleId)
+int VolatileDatabase::deleteArticle(int newsgroupId, int articleId)
 {
+    if (newsgroups.find(newsgroupId) == newsgroups.end())
+    {
+        return 2;
+    }
     Newsgroup &ng = newsgroups.at(newsgroupId);
-    ng.deleteArticle(articleId);
+    bool deleted = ng.deleteArticle(articleId);
+    if (!deleted)
+    {
+        return 3;
+    }
+    return 1;
 }
