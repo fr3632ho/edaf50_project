@@ -39,3 +39,7 @@ void Newsgroup::writeArticle(string title, string text, string author)
     articles.insert(std::pair<int, Article>(article_id, Article(title, author, text, article_id)));
     article_id++;
 }
+
+void Newsgroup::writeArticle(Article a) {
+    articles.emplace(a.getId(), a);
+}

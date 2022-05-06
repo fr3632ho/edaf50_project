@@ -10,10 +10,13 @@
 #include <random>
 //#include <sys/stat.h>
 
+using std::cout;
+using std::endl;
 using std::pair;
 using std::string;
 using std::system;
 using std::vector;
+
 namespace fs = std::filesystem;
 
 const string idmap = "id_newsgroups_map.txt";
@@ -57,10 +60,10 @@ void DiskDatabase::initDb()
     }
 
     // for testing
-    for (const auto &entry : id_newsgroup_map)
-    {
-        std::cout << entry.first << " -> " << entry.second << std::endl;
-    }
+    // for (const auto &entry : id_newsgroup_map)
+    // {
+    //     std::cout << entry.first << " -> " << entry.second << std::endl;
+    // }
 }
 
 bool DiskDatabase::createNewsgroup(string title)
@@ -72,6 +75,7 @@ bool DiskDatabase::createNewsgroup(string title)
         std::ofstream outfile;
         outfile.open(path + idmap, std::ios_base::app);
         outfile << id << " " << title << std::endl;
+        id_newsgroup_map.emplace(id, title);
         outfile.close();
         id++;
 
@@ -85,13 +89,14 @@ Newsgroup DiskDatabase::getNewsgroup(int id)
 {
     Newsgroup ng(id_newsgroup_map[id], id);
     string dir = path + std::to_string(id);
-    for (auto &article : fs::directory_iterator(dir))
-    {
+    for (const auto &article : fs::directory_iterator(dir))    
+    {           
         string a_path = article.path().string();
-        string a_name = a_path.substr(path.length(), a_path.length());
+        string a_name = a_path.substr(path.length() + std::to_string(id).length() + 1, a_path.length());
+        // cout << a_path << " -> " << a_name << endl;
         int a_id = std::stoi(a_name);
         Article a = getArticle(id, a_id);
-        ng.writeArticle(a.getTitle(), a.getText(), a.getAuthor());
+        ng.writeArticle(a);
     }
     return ng;
 }
@@ -105,9 +110,9 @@ map<int, Newsgroup> DiskDatabase::getNewsgroups()
         try
         {
             string f_path = folder.path().string();
-            string f_name = f_path.substr(path.length(), f_path.length());
+            string f_name = f_path.substr(path.length(), f_path.length());            
             int id = std::stoi(f_name);
-            std::cout << id << std::endl;
+            // cout << f_path << " -> " << f_name << endl;
             Newsgroup ng = getNewsgroup(id);
             groups.emplace(id, ng);
         }
@@ -134,10 +139,10 @@ bool DiskDatabase::deleteNewsgroup(int newsgroupId)
 
     std::ofstream idmap_outfile;
     idmap_outfile.open(path + idmap, std::ios::out);
-    for (auto const &[key, value] : id_newsgroup_map)
+    for (const auto &kv : id_newsgroup_map)
     {
-        std::cout << "Pairs: " << key << " " << value << std::endl;
-        idmap_outfile << key << " " << value << std::endl;
+        // std::cout << "Pairs: " << kv.first << " " << kv.second << std::endl;
+        idmap_outfile << kv.first << " " << kv.second << std::endl;
     }
     idmap_outfile.close();
     return true;
@@ -161,11 +166,13 @@ Article DiskDatabase::getArticle(int newsgroupId, int articleId)
         while (getline(file, line))
         {
             lines.push_back(line);
-        }
-        Article a(lines[0], lines[1], lines[2], articleId);
+        }        
         file.close();
+
+        Article a(lines[0], lines[1], lines[2], articleId);
+        cout << articleId << " -> (" << a.getAuthor() << "," << a.getTitle() << "," << a.getText() << ")" << endl;
         return a;
-    }
+    }    
 }
 
 int getRandom()
@@ -179,17 +186,24 @@ int getRandom()
 // changed to bool for error handling
 bool DiskDatabase::writeArticle(int newsgroupId, string title, string text, string author)
 {
+
+    std::fflush(stdout);
     string ng_dir = path + std::to_string(newsgroupId);
-    if (!fs::exists(ng_dir))
-    {
-        int id = getRandom();
-        string a_dir = path + std::to_string(newsgroupId) + "/" + std::to_string(id);
+    cout << "Using newsgroup_id " << newsgroupId << " on path: "<< path << endl;
+    if (fs::exists(ng_dir))
+    {        
+        int id = getRandom();        
+        string a_dir = ng_dir + "/" + std::to_string(id);
         std::ofstream a_outfile(a_dir);
         a_outfile << title << std::endl;
-        a_outfile << text << std::endl;
         a_outfile << author << std::endl;
+        a_outfile << text << std::endl;
         a_outfile.close();
+        return true;
     }
+
+    cout << "Could not find directory " << ng_dir << endl;
+    return false;
 }
 
 // changed to bool for error handling

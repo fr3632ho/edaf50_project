@@ -18,6 +18,7 @@ public:
     map<int, Article> getArticles();
     bool deleteArticle(int articleId);
     void writeArticle(string title, string text, string author);
+    void writeArticle(Article a);
     int getId();
 
 private:

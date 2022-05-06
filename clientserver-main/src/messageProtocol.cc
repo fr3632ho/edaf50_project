@@ -89,12 +89,14 @@ void MessageProtocol::process_request()
         listArticles();
         break;
     case Protocol::COM_CREATE_ART:
+        cout << "Recieved COM_CREATE_ART" << endl;
         createArticle();
         break;
     case Protocol::COM_DELETE_ART:
         deleteArticle();
         break;
     case Protocol::COM_GET_ART:
+        cout << "Recieved COM_GET_ART" << endl;
         getArticle();
         break;
     default:
@@ -358,8 +360,10 @@ void MessageProtocol::getArticle()
         writeProtocol(conn, Protocol::ANS_GET_ART);
         try
         {
+            cout << "Getting article with (" << newsgroup_id << "," << article_id << ")" << endl;
             Article article = db->getArticle(newsgroup_id, article_id);
             writeProtocol(conn, Protocol::ANS_ACK);
+            cout << article.getId() << " " << article.getAuthor() << " " << article.getTitle() << " " << article.getText() << endl;
 
             writeProtocol(conn, Protocol::PAR_STRING);
             writeNumber(conn, article.getTitle().size());

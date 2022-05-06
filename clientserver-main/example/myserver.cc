@@ -103,7 +103,7 @@ void serve_one(Server &server, Database *db)
 int main(int argc, char *argv[])
 {
         auto server = init(argc, argv);
-        Database *db = new VolatileDatabase{};
+        Database *db = new DiskDatabase{};
 
         while (true)
         {
