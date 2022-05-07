@@ -33,7 +33,7 @@ void MessageProtocol::writeString(const std::shared_ptr<Connection> &conn, const
     {
         conn->write(c);
     }
-    conn->write('$');
+    // conn->write('$');
 }
 
 string MessageProtocol::readString(const std::shared_ptr<Connection> &conn)
@@ -142,6 +142,7 @@ void MessageProtocol::createNewsgroup()
     std::stringstream ng_name;
     while (proto != Protocol::COM_END)
     {
+        cout << static_cast<int>(proto) << endl;
         int size = readNumber(conn);
 
         for (int i = 0; i < size; i++)

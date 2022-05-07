@@ -1,0 +1,2 @@
+2 Group 1
+4 This is a group with a long title, but the server must be able to handle that.

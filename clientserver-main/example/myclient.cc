@@ -8,6 +8,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <memory>
 
 using std::cerr;
 using std::cin;
@@ -91,71 +92,166 @@ Connection init(int argc, char *argv[])
         return conn;
 }
 
-void listNewsgroupsResponse(const Connection &conn)
+void listNewsgroupsResponse(MessageProtocol protocol, shared_ptr<Connection> conn)
 {
         // Handle if wrong param
-        Protocol par_num = static_cast<Protocol>(readChar(conn));
-        int nbr;
-        string reply;
-        nbr = stoi(readString(conn));
-        Protocol par_string = static_cast<Protocol>(readChar(conn));
-        reply = readString(conn);
-        cout << nbr << " " << reply << endl;
-        Protocol end_byte = static_cast<Protocol>(readChar(conn));
+        Protocol par_num = protocol.readProtocol(conn);
+        int nbrNewsgroups = protocol.readNumber(conn);
+        cout << nbrNewsgroups << endl;
+        for (int i = 0; i < nbrNewsgroups; i++)
+        {
+                Protocol par_num = protocol.readProtocol(conn);
+                int nbr = protocol.readNumber(conn);
+                Protocol par_string = protocol.readProtocol(conn);
+                string reply = protocol.readStringP(conn);
+                cout << nbr << " " << reply << endl;
+        }
+        Protocol end_byte = protocol.readProtocol(conn);
 }
 
-int app(const Connection &conn)
+void createNewsgroupResponse(MessageProtocol protocol, shared_ptr<Connection> conn)
+{
+        Protocol ack = protocol.readProtocol(conn);
+        if (ack == Protocol::ANS_ACK)
+        {
+                cout << "Newsgroup created" << endl;
+        }
+
+        if (ack == Protocol::ANS_NAK)
+        {
+                Protocol err = protocol.readProtocol(conn);
+                if (err == Protocol::ERR_NG_ALREADY_EXISTS)
+                {
+                        cout << "Newsgroup already exists" << endl;
+                }
+        }
+        Protocol end = protocol.readProtocol(conn);
+}
+
+void deleteNewsgroupResponse(MessageProtocol protocol, shared_ptr<Connection> conn)
+{
+        Protocol ack = protocol.readProtocol(conn);
+        if (ack == Protocol::ANS_ACK)
+        {
+                cout << "Newsgroup deleted" << endl;
+        }
+
+        if (ack == Protocol::ANS_NAK)
+        {
+                Protocol err = protocol.readProtocol(conn);
+                if (err == Protocol::ERR_NG_DOES_NOT_EXIST)
+                {
+                        cout << "Newsgroup does not exist" << endl;
+                }
+        }
+        Protocol end = protocol.readProtocol(conn);
+}
+
+void listArticlesResponse(MessageProtocol protocol, shared_ptr<Connection> conn)
+{
+        Protocol ack = protocol.readProtocol(conn);
+        if (ack == Protocol::ANS_ACK)
+        {
+                Protocol p_num = protocol.readProtocol(conn);
+                int numArt = protocol.readNumber(conn);
+                for (int i = 0; i < numArt; i++)
+                {
+                        Protocol p_num = protocol.readProtocol(conn);
+                        int id = protocol.readNumber(conn);
+                        Protocol p_string = protocol.readProtocol(conn);
+                        string title = protocol.readStringP(conn);
+                        cout << id << " " << title << endl;
+                }
+        }
+
+        if (ack == Protocol::ANS_NAK)
+        {
+                Protocol err = protocol.readProtocol(conn);
+                if (err == Protocol::ERR_NG_DOES_NOT_EXIST)
+                {
+                        cout << "Newsgroup does not exist" << endl;
+                }
+        }
+}
+
+int app(shared_ptr<Connection> conn)
 {
         cout << "Type a command: ";
-
+        MessageProtocol protocol = MessageProtocol(conn);
         int input;
         while (cin >> input)
         // while (getline(cin, input))
         {
                 Protocol command = static_cast<Protocol>(input);
-                string parameter_string;
+                string parameter_string = "";
                 int p_num = 0;
                 try
                 {
                         switch (command)
                         {
                         case Protocol::COM_LIST_NG:
-                                writeProtocol(conn, Protocol::COM_LIST_NG);
-                                writeProtocol(conn, Protocol::COM_END);
+                                protocol.writeProtocol(conn, Protocol::COM_LIST_NG);
+                                protocol.writeProtocol(conn, Protocol::COM_END);
                                 break;
                         case Protocol::COM_CREATE_NG:
-                                writeProtocol(conn, Protocol::COM_CREATE_NG);
-                                writeProtocol(conn, Protocol::PAR_STRING);
+                                protocol.writeProtocol(conn, Protocol::COM_CREATE_NG);
+                                protocol.writeProtocol(conn, Protocol::PAR_STRING);
                                 while (getline(cin, parameter_string))
                                 {
-                                        writeString(conn, parameter_string);
+                                        protocol.writeNumber(conn, parameter_string.size());
+                                        protocol.writeString(conn, parameter_string);
                                         break;
                                 }
-                                writeProtocol(conn, Protocol::COM_END);
+                                protocol.writeProtocol(conn, Protocol::COM_END);
                                 break;
+
                         case Protocol::COM_DELETE_NG:
-                                writeProtocol(conn, Protocol::COM_DELETE_NG);
-                                writeProtocol(conn, Protocol::PAR_NUM);
+                                protocol.writeProtocol(conn, Protocol::COM_DELETE_NG);
+                                protocol.writeProtocol(conn, Protocol::PAR_NUM);
                                 while (cin >> p_num)
                                 {
-                                        writeNumber(conn, p_num);
+                                        protocol.writeNumber(conn, p_num);
                                         break;
                                 }
-                                writeProtocol(conn, Protocol::COM_END);
+                                protocol.writeProtocol(conn, Protocol::COM_END);
                                 break;
 
                         case Protocol::COM_LIST_ART:
-                                writeProtocol(conn, Protocol::COM_LIST_NG);
-                                writeProtocol(conn, Protocol::PAR_NUM);
+                                protocol.writeProtocol(conn, Protocol::COM_LIST_NG);
+                                protocol.writeProtocol(conn, Protocol::PAR_NUM);
                                 while (cin >> p_num)
                                 {
-                                        writeNumber(conn, p_num);
+                                        protocol.writeNumber(conn, p_num);
                                         break;
                                 }
-                                writeProtocol(conn, Protocol::COM_END);
+                                protocol.writeProtocol(conn, Protocol::COM_END);
                                 break;
                         default:
                                 cout << "default fall through" << endl;
+                                break;
+                        }
+
+                        Protocol reply = protocol.readProtocol(conn);
+                        switch (reply)
+                        {
+                        case Protocol::ANS_LIST_NG:
+                                listNewsgroupsResponse(protocol, conn);
+                                break;
+                        case Protocol::ANS_CREATE_NG:
+                                // method to handle ack/nack
+                                createNewsgroupResponse(protocol, conn);
+                                break;
+                        case Protocol::ANS_DELETE_NG:
+                                // method to handle ack/nack
+                                deleteNewsgroupResponse(protocol, conn);
+                                break;
+                        case Protocol::ANS_LIST_ART:
+                                listArticlesResponse(protocol, conn);
+                                // method to handle ack/nack
+                                cout << "COM_LIST_ART Success" << endl;
+                                break;
+                        default:
+                                cout << "default ANS FALLTHROUGH" << endl;
                                 break;
                         }
                 }
@@ -164,30 +260,6 @@ int app(const Connection &conn)
                         cout << " no reply from server. Exiting." << endl;
                         return 1;
                 }
-
-                char reply = readChar(conn);
-                switch (static_cast<Protocol>(reply))
-                {
-                case Protocol::ANS_LIST_NG:
-                        listNewsgroupsResponse(conn);
-                        cout << "COM_LIST_NG" << endl;
-                        break;
-                case Protocol::ANS_CREATE_NG:
-                        // method to handle ack/nack
-                        cout << "COM_CREATE_NG Success" << endl;
-                        break;
-                case Protocol::ANS_DELETE_NG:
-                        // method to handle ack/nack
-                        cout << "COM_DELETE_NG Success" << endl;
-                        break;
-                case Protocol::ANS_LIST_ART:
-                        // method to handle ack/nack
-                        cout << "COM_LIST_ART Success" << endl;
-                        break;
-                default:
-                        cout << "default ANS FALLTHROUGH" << endl;
-                        break;
-                }
         }
         cout << "\nexiting.\n";
         return 0;
@@ -195,6 +267,7 @@ int app(const Connection &conn)
 
 int main(int argc, char *argv[])
 {
-        Connection conn = init(argc, argv);
+        auto conn = std::make_shared<Connection>(init(argc, argv));
+        // Connection conn = ;
         return app(conn);
 }

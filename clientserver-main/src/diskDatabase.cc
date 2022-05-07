@@ -66,6 +66,7 @@ void DiskDatabase::initDb()
     // }
 }
 
+// TODO: Hantera "newsgroup already exists"
 bool DiskDatabase::createNewsgroup(string title)
 {
 
@@ -89,8 +90,8 @@ Newsgroup DiskDatabase::getNewsgroup(int id)
 {
     Newsgroup ng(id_newsgroup_map[id], id);
     string dir = path + std::to_string(id);
-    for (const auto &article : fs::directory_iterator(dir))    
-    {           
+    for (const auto &article : fs::directory_iterator(dir))
+    {
         string a_path = article.path().string();
         string a_name = a_path.substr(path.length() + std::to_string(id).length() + 1, a_path.length());
         // cout << a_path << " -> " << a_name << endl;
@@ -110,7 +111,7 @@ map<int, Newsgroup> DiskDatabase::getNewsgroups()
         try
         {
             string f_path = folder.path().string();
-            string f_name = f_path.substr(path.length(), f_path.length());            
+            string f_name = f_path.substr(path.length(), f_path.length());
             int id = std::stoi(f_name);
             // cout << f_path << " -> " << f_name << endl;
             Newsgroup ng = getNewsgroup(id);
@@ -166,13 +167,13 @@ Article DiskDatabase::getArticle(int newsgroupId, int articleId)
         while (getline(file, line))
         {
             lines.push_back(line);
-        }        
+        }
         file.close();
 
         Article a(lines[0], lines[1], lines[2], articleId);
         cout << articleId << " -> (" << a.getAuthor() << "," << a.getTitle() << "," << a.getText() << ")" << endl;
         return a;
-    }    
+    }
 }
 
 int getRandom()
@@ -189,10 +190,10 @@ bool DiskDatabase::writeArticle(int newsgroupId, string title, string text, stri
 
     std::fflush(stdout);
     string ng_dir = path + std::to_string(newsgroupId);
-    cout << "Using newsgroup_id " << newsgroupId << " on path: "<< path << endl;
+    cout << "Using newsgroup_id " << newsgroupId << " on path: " << path << endl;
     if (fs::exists(ng_dir))
-    {        
-        int id = getRandom();        
+    {
+        int id = getRandom();
         string a_dir = ng_dir + "/" + std::to_string(id);
         std::ofstream a_outfile(a_dir);
         a_outfile << title << std::endl;
