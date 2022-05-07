@@ -30,9 +30,13 @@ public:
 private:
     map<int, Newsgroup> newsgroups;
     map<int, string> id_newsgroup_map;
+    map<int, int> newsgroup_max_articleid;
     const string path;
     int id{1};
     void initDb();
+    void populateDb();
     Newsgroup getNewsgroup(int);
+    int getNextArticleId(int);
+
 };
 #endif
