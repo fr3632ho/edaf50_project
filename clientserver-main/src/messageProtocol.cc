@@ -142,20 +142,16 @@ void MessageProtocol::createNewsgroup()
     std::stringstream ng_name;
     while (proto != Protocol::COM_END)
     {
-        cout << static_cast<int>(proto) << endl;
         int size = readNumber(conn);
 
         for (int i = 0; i < size; i++)
             ng_name << conn->read();
-
-        cout << "name: " << ng_name.str() << endl;
 
         proto = readProtocol(conn);
     }
     //  TODO: Handle if already exists
     bool result = db->createNewsgroup(ng_name.str());
 
-    cout << "Recieved COM_END" << endl;
     writeProtocol(conn, Protocol::ANS_CREATE_NG);
 
     if (result)
@@ -166,7 +162,6 @@ void MessageProtocol::createNewsgroup()
     {
         writeProtocol(conn, Protocol::ANS_NAK);
         writeProtocol(conn, Protocol::ERR_NG_ALREADY_EXISTS);
-        cout << "ng already exists!!" << endl;
     }
     writeProtocol(conn, Protocol::ANS_END);
 }

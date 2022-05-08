@@ -92,12 +92,25 @@ Connection init(int argc, char *argv[])
         return conn;
 }
 
+void printCommands()
+{
+        cout << "------------------------" << endl;
+        cout << "1: List newsgroups" << endl;
+        cout << "2: Create newsgroup" << endl;
+        cout << "3: Delete newsgroup" << endl;
+        cout << "4: List articles in newsgroup" << endl;
+        cout << "5: Create article" << endl;
+        cout << "6: Delete article" << endl;
+        cout << "7: Get article" << endl;
+        cout << "------------------------" << endl;
+}
+
 void listNewsgroupsResponse(MessageProtocol protocol, shared_ptr<Connection> conn)
 {
         // Handle if wrong param
         Protocol par_num = protocol.readProtocol(conn);
         int nbrNewsgroups = protocol.readNumber(conn);
-        cout << nbrNewsgroups << endl;
+        cout << "Number of newsgroups: " << nbrNewsgroups << endl;
         for (int i = 0; i < nbrNewsgroups; i++)
         {
                 Protocol par_num = protocol.readProtocol(conn);
@@ -122,7 +135,7 @@ void createNewsgroupResponse(MessageProtocol protocol, shared_ptr<Connection> co
                 Protocol err = protocol.readProtocol(conn);
                 if (err == Protocol::ERR_NG_ALREADY_EXISTS)
                 {
-                        cout << "Newsgroup already exists" << endl;
+                        cout << "Error: Newsgroup already exists" << endl;
                 }
         }
         Protocol end = protocol.readProtocol(conn);
@@ -141,7 +154,7 @@ void deleteNewsgroupResponse(MessageProtocol protocol, shared_ptr<Connection> co
                 Protocol err = protocol.readProtocol(conn);
                 if (err == Protocol::ERR_NG_DOES_NOT_EXIST)
                 {
-                        cout << "Newsgroup does not exist" << endl;
+                        cout << "Error: Newsgroup does not exist" << endl;
                 }
         }
         Protocol end = protocol.readProtocol(conn);
@@ -154,6 +167,7 @@ void listArticlesResponse(MessageProtocol protocol, shared_ptr<Connection> conn)
         {
                 Protocol p_num = protocol.readProtocol(conn);
                 int numArt = protocol.readNumber(conn);
+                cout << "Number of articles: " << numArt << endl;
                 for (int i = 0; i < numArt; i++)
                 {
                         Protocol p_num = protocol.readProtocol(conn);
@@ -169,20 +183,117 @@ void listArticlesResponse(MessageProtocol protocol, shared_ptr<Connection> conn)
                 Protocol err = protocol.readProtocol(conn);
                 if (err == Protocol::ERR_NG_DOES_NOT_EXIST)
                 {
-                        cout << "Newsgroup does not exist" << endl;
+                        cout << "Error: Newsgroup does not exist" << endl;
                 }
         }
+        Protocol end = protocol.readProtocol(conn);
+}
+
+void createArticleResponse(MessageProtocol protocol, shared_ptr<Connection> conn)
+{
+        Protocol ack = protocol.readProtocol(conn);
+        if (ack == Protocol::ANS_ACK)
+        {
+                cout << "Article created" << endl;
+        }
+
+        if (ack == Protocol::ANS_NAK)
+        {
+                Protocol err = protocol.readProtocol(conn);
+                if (err == Protocol::ERR_NG_DOES_NOT_EXIST)
+                {
+                        cout << "Error: Newsgroup does not exist" << endl;
+                }
+        }
+
+        Protocol end = protocol.readProtocol(conn);
+}
+
+void deleteArticleResponse(MessageProtocol protocol, shared_ptr<Connection> conn)
+{
+        Protocol ack = protocol.readProtocol(conn);
+        if (ack == Protocol::ANS_ACK)
+        {
+                cout << "Article deleted" << endl;
+        }
+
+        if (ack == Protocol::ANS_NAK)
+        {
+                Protocol err = protocol.readProtocol(conn);
+                if (err == Protocol::ERR_NG_DOES_NOT_EXIST)
+                {
+                        cout << "Error: Newsgroup does not exist" << endl;
+                }
+
+                if (err == Protocol::ERR_ART_DOES_NOT_EXIST)
+                {
+                        cout << "Error: Article does not exist" << endl;
+                }
+        }
+
+        Protocol end = protocol.readProtocol(conn);
+}
+
+void getArticleResponse(MessageProtocol protocol, shared_ptr<Connection> conn)
+{
+        Protocol ack = protocol.readProtocol(conn);
+        if (ack == Protocol::ANS_ACK)
+        {
+                Protocol par_string = protocol.readProtocol(conn);
+                string title = protocol.readStringP(conn);
+                cout << "************************" << endl;
+                cout << title << "\n"
+                     << endl;
+
+                par_string = protocol.readProtocol(conn);
+                string author = protocol.readStringP(conn);
+                cout << "By: " << author << endl;
+                cout << "************************" << endl;
+                par_string = protocol.readProtocol(conn);
+                string text = protocol.readStringP(conn);
+                cout << text << endl;
+                cout << "************************" << endl;
+        }
+
+        if (ack == Protocol::ANS_NAK)
+        {
+                Protocol err = protocol.readProtocol(conn);
+                if (err == Protocol::ERR_NG_DOES_NOT_EXIST)
+                {
+                        cout << "Error: Newsgroup does not exist" << endl;
+                }
+
+                if (err == Protocol::ERR_ART_DOES_NOT_EXIST)
+                {
+                        cout << "Error: Article does not exist" << endl;
+                }
+        }
+
+        Protocol end = protocol.readProtocol(conn);
 }
 
 int app(shared_ptr<Connection> conn)
 {
-        cout << "Type a command: ";
+        printCommands();
+        cout << "Type a command: " << endl;
         MessageProtocol protocol = MessageProtocol(conn);
-        int input;
-        while (cin >> input)
+        string input = "0";
+        while (getline(cin, input))
         // while (getline(cin, input))
         {
-                Protocol command = static_cast<Protocol>(input);
+                Protocol command;
+                try
+                {
+                        command = static_cast<Protocol>(stoi(input));
+                }
+                catch (std::invalid_argument e)
+                {
+                        command = Protocol::UNDEFINED;
+                        cout << "Error: Enter a valid command" << endl;
+                        printCommands();
+                        continue;
+                }
+
                 string parameter_string = "";
                 int p_num = 0;
                 try
@@ -190,12 +301,15 @@ int app(shared_ptr<Connection> conn)
                         switch (command)
                         {
                         case Protocol::COM_LIST_NG:
+                                cout << "List newsgroups " << endl;
                                 protocol.writeProtocol(conn, Protocol::COM_LIST_NG);
                                 protocol.writeProtocol(conn, Protocol::COM_END);
                                 break;
                         case Protocol::COM_CREATE_NG:
+                                cout << "Create newsgroup " << endl;
                                 protocol.writeProtocol(conn, Protocol::COM_CREATE_NG);
                                 protocol.writeProtocol(conn, Protocol::PAR_STRING);
+                                cout << "Enter newsgroup name: " << endl;
                                 while (getline(cin, parameter_string))
                                 {
                                         protocol.writeNumber(conn, parameter_string.size());
@@ -206,29 +320,178 @@ int app(shared_ptr<Connection> conn)
                                 break;
 
                         case Protocol::COM_DELETE_NG:
+                                cout << "Delete newsgroup " << endl;
                                 protocol.writeProtocol(conn, Protocol::COM_DELETE_NG);
                                 protocol.writeProtocol(conn, Protocol::PAR_NUM);
-                                while (cin >> p_num)
+                                cout << "Enter newsgroup id: " << endl;
+                                while (getline(cin, parameter_string))
                                 {
-                                        protocol.writeNumber(conn, p_num);
+                                        try
+                                        {
+                                                protocol.writeNumber(conn, stoi(parameter_string));
+                                        }
+                                        catch (std::invalid_argument e)
+                                        {
+                                                cout << "Enter valid newsgroup id:" << endl;
+                                                continue;
+                                        }
+
                                         break;
                                 }
                                 protocol.writeProtocol(conn, Protocol::COM_END);
                                 break;
 
                         case Protocol::COM_LIST_ART:
-                                protocol.writeProtocol(conn, Protocol::COM_LIST_NG);
+                                cout << "List articles " << endl;
+                                protocol.writeProtocol(conn, Protocol::COM_LIST_ART);
                                 protocol.writeProtocol(conn, Protocol::PAR_NUM);
-                                while (cin >> p_num)
+                                cout << "Enter newsgroup id: " << endl;
+                                while (getline(cin, parameter_string))
                                 {
-                                        protocol.writeNumber(conn, p_num);
+                                        try
+                                        {
+                                                protocol.writeNumber(conn, stoi(parameter_string));
+                                        }
+                                        catch (std::invalid_argument e)
+                                        {
+                                                cout << "Enter valid newsgroup id:" << endl;
+                                                continue;
+                                        }
+
                                         break;
                                 }
                                 protocol.writeProtocol(conn, Protocol::COM_END);
                                 break;
-                        default:
-                                cout << "default fall through" << endl;
+
+                        case Protocol::COM_CREATE_ART:
+                                cout << "Create article " << endl;
+                                protocol.writeProtocol(conn, Protocol::COM_CREATE_ART);
+                                protocol.writeProtocol(conn, Protocol::PAR_NUM);
+                                cout << "Enter newsgroup id: " << endl;
+                                while (getline(cin, parameter_string))
+                                {
+                                        try
+                                        {
+                                                protocol.writeNumber(conn, stoi(parameter_string));
+                                        }
+                                        catch (std::invalid_argument e)
+                                        {
+                                                cout << "Enter valid newsgroup id:" << endl;
+                                                continue;
+                                        }
+
+                                        break;
+                                }
+                                cout << "Enter article title: " << endl;
+                                protocol.writeProtocol(conn, Protocol::PAR_STRING);
+                                while (getline(cin, parameter_string))
+                                {
+                                        protocol.writeNumber(conn, parameter_string.size());
+                                        protocol.writeString(conn, parameter_string);
+                                        break;
+                                }
+                                cout << "Enter article author: " << endl;
+                                protocol.writeProtocol(conn, Protocol::PAR_STRING);
+                                while (getline(cin, parameter_string))
+                                {
+                                        protocol.writeNumber(conn, parameter_string.size());
+                                        protocol.writeString(conn, parameter_string);
+                                        break;
+                                }
+                                cout << "Enter article text: " << endl;
+                                protocol.writeProtocol(conn, Protocol::PAR_STRING);
+                                while (getline(cin, parameter_string))
+                                {
+                                        protocol.writeNumber(conn, parameter_string.size());
+                                        protocol.writeString(conn, parameter_string);
+                                        break;
+                                }
+                                protocol.writeProtocol(conn, Protocol::COM_END);
                                 break;
+
+                        case Protocol::COM_DELETE_ART:
+                                cout << "Delete article " << endl;
+                                protocol.writeProtocol(conn, Protocol::COM_DELETE_ART);
+                                protocol.writeProtocol(conn, Protocol::PAR_NUM);
+                                cout << "Enter newsgroup id: " << endl;
+                                while (getline(cin, parameter_string))
+                                {
+
+                                        try
+                                        {
+                                                protocol.writeNumber(conn, stoi(parameter_string));
+                                        }
+                                        catch (std::invalid_argument e)
+                                        {
+                                                cout << "Enter valid newsgroup id:" << endl;
+                                                continue;
+                                        }
+
+                                        break;
+                                }
+                                protocol.writeProtocol(conn, Protocol::PAR_NUM);
+                                cout << "Enter article id: " << endl;
+                                while (getline(cin, parameter_string))
+                                {
+
+                                        try
+                                        {
+                                                protocol.writeNumber(conn, stoi(parameter_string));
+                                        }
+                                        catch (std::invalid_argument e)
+                                        {
+                                                cout << "Enter valid article id:" << endl;
+                                                continue;
+                                        }
+
+                                        break;
+                                }
+                                protocol.writeProtocol(conn, Protocol::COM_END);
+                                break;
+
+                        case Protocol::COM_GET_ART:
+                                cout << "Get article " << endl;
+                                protocol.writeProtocol(conn, Protocol::COM_GET_ART);
+                                protocol.writeProtocol(conn, Protocol::PAR_NUM);
+                                cout << "Enter newsgroup id: " << endl;
+                                while (getline(cin, parameter_string))
+                                {
+                                        try
+                                        {
+                                                protocol.writeNumber(conn, stoi(parameter_string));
+                                        }
+                                        catch (std::invalid_argument e)
+                                        {
+                                                cout << "Enter valid newsgroup id:" << endl;
+                                                continue;
+                                        }
+
+                                        break;
+                                }
+                                cout << "Enter article id: " << endl;
+                                protocol.writeProtocol(conn, Protocol::PAR_NUM);
+                                while (getline(cin, parameter_string))
+                                {
+
+                                        try
+                                        {
+                                                protocol.writeNumber(conn, stoi(parameter_string));
+                                        }
+                                        catch (std::invalid_argument e)
+                                        {
+                                                cout << "Enter valid article id:" << endl;
+                                                continue;
+                                        }
+
+                                        break;
+                                }
+                                protocol.writeProtocol(conn, Protocol::COM_END);
+                                break;
+
+                        default:
+                                cout << "Error: Enter a valid command" << endl;
+                                printCommands();
+                                continue;
                         }
 
                         Protocol reply = protocol.readProtocol(conn);
@@ -248,12 +511,24 @@ int app(shared_ptr<Connection> conn)
                         case Protocol::ANS_LIST_ART:
                                 listArticlesResponse(protocol, conn);
                                 // method to handle ack/nack
-                                cout << "COM_LIST_ART Success" << endl;
+                                break;
+                        case Protocol::ANS_CREATE_ART:
+                                createArticleResponse(protocol, conn);
+                                // method to handle ack/nack
+                                break;
+                        case Protocol::ANS_DELETE_ART:
+                                deleteArticleResponse(protocol, conn);
+                                // method to handle ack/nack
+                                break;
+                        case Protocol::ANS_GET_ART:
+                                getArticleResponse(protocol, conn);
                                 break;
                         default:
                                 cout << "default ANS FALLTHROUGH" << endl;
                                 break;
                         }
+                        cout << "------------------------" << endl;
+                        cout << "Type a command: " << endl;
                 }
                 catch (ConnectionClosedException &)
                 {
