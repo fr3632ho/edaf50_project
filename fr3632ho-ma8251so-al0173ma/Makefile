@@ -10,7 +10,7 @@ DEPFLAGS = -MT $@ -MMD -MP -MF $*.d
 # Define preprocessor, compiler, and linker flags. Uncomment the # lines
 # if you use clang++ and wish to use libc++ instead of GNU's libstdc++.
 # -g is for debugging.
-CPPFLAGS =  -Iinclude
+CPPFLAGS =  -I.
 CXXFLAGS =  -O2 -Wall -Wextra -pedantic-errors -Wold-style-cast 
 CXXFLAGS += -std=c++17 
 CXXFLAGS += -g
@@ -21,7 +21,7 @@ LDFLAGS =   -g -Llib
 #LDFLAGS +=  -stdlib=libc++
 
 all: lib/libclientserver.a	
-	make -C executables
+	make -C src/executables
 
 # Create the library; ranlib is for Darwin (OS X) and maybe other systems.
 # Doesn't seem to do any damage on other systems.
@@ -32,7 +32,7 @@ lib/libclientserver.a: src/connection.o src/server.o src/newsgroup.o src/databas
 	ranlib lib/libclientserver.a
 
 # Phony targets
-.PHONY: all clean distclean install
+.PHONY: all clean distclean install 
 
 SRC = $(wildcard src/*.cc)
 
@@ -43,8 +43,13 @@ clean:
 distclean: clean
 	-rm lib/libclientserver.a
 	-rmdir lib
+	-rm bin/*
 	-rm $(SRC:.cc=.d) 	
-	make -C example distclean
+	make -C src/executables distclean
+
+install: all
+	cp src/executables/myserver bin/
+	cp src/executables/myclient bin/
 
 # Include the *.d files
 -include $(SRC:.cc=.d)
